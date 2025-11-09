@@ -30,6 +30,15 @@
 	text-align: center;
 }
 
+.registro span #valido {
+	color: green;
+	font-size: 0.9rem;
+	font-weight: bold;
+	display: block;
+	margin-top: 10px;
+	text-align: center;
+}
+
 /* Botón */
 .registro button {
 	margin-top: 10px;

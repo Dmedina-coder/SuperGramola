@@ -25,7 +25,7 @@
 
 		<button type="submit">Registrar</button>
 
-		<span *ngIf="registroOK">Registro realizado correctamente</span>
+		<span id="valido" *ngIf="registroOK">Registro realizado correctamente</span>
 		<span *ngIf="pwdDiferentes">Las contraseñas no coinciden</span>
 		<span *ngIf="emailInvalido">El email introducido no es valido</span>
 	</form>
