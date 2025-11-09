@@ -1,0 +1,14 @@
+.menu button {
+	padding: 10px;
+	border: none;
+	border-radius: 8px;
+	background-color: black;
+	color: white;
+	cursor: pointer;
+	font-weight: bold;
+	transition: background-color 0.3s;
+}
+
+.menu button:hover {
+	background-color: #333;
+}

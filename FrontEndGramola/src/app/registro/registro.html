@@ -1,0 +1,32 @@
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<div class="registro-container">
+	<form class="registro" (ngSubmit)="registrar()">
+		<div>
+			<a class="back-arrow" routerLink="/">
+				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
+			</a>
+			<h2>Registro</h2>
+		</div>
+
+		<div>
+			<label for="email">Email:</label>
+			<input type="email" id="email" name="email" [(ngModel)]="email" required>
+		</div>
+
+		<div>
+			<label for="password">Contraseña:</label>
+			<input type="password" id="pwd1" name="pwd1" [(ngModel)]="pwd1" required>
+		</div>
+
+		<div>
+			<label for="confirmPassword">Confirmar Contraseña:</label>
+			<input type="password" id="pwd2" name="pwd2" [(ngModel)]="pwd2" required>
+		</div>
+
+		<button type="submit">Registrar</button>
+
+		<span *ngIf="registroOK">Registro realizado correctamente</span>
+		<span *ngIf="pwdDiferentes">Las contraseñas no coinciden</span>
+		<span *ngIf="emailInvalido">El email introducido no es valido</span>
+	</form>
+</div>

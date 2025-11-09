@@ -1,0 +1,48 @@
+/* Título */
+.login h2 {
+	margin-bottom: 10px;
+}
+
+/* Etiquetas */
+.login label {
+	font-weight: bold;
+	text-align: left;
+	display: block;
+	margin-bottom: 5px;
+}
+
+/* Inputs */
+.login input {
+	padding: 8px;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Mensajes de error */
+.login span {
+	color: red;
+	font-size: 0.85rem;
+	text-align: left;
+	display: block;
+	margin-top: 4px;
+}
+
+/* Botón */
+.login button {
+	margin-top: 10px;
+	padding: 10px;
+	border: none;
+	border-radius: 8px;
+	background-color: black;
+	color: white;
+	cursor: pointer;
+	font-weight: bold;
+	transition: background-color 0.3s;
+}
+
+/* Hover del botón */
+.login button:hover {
+	background-color: #333;
+}

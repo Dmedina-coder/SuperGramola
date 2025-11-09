@@ -1,0 +1,32 @@
+<div class="gramola-container">
+	<h2>Lista de reproducción actual</h2>
+	<ul class="playlist">
+	  <li *ngFor="let song of playlist">
+		{{ song.title }} - {{ song.artist }}
+	  </li>
+	</ul>
+  
+	<button class="search-button" (click)="openModal()">
+	  🔍 Buscar canción
+	</button>
+  
+	<!-- Modal personalizado -->
+	<div class="modal-overlay" *ngIf="showModal">
+	  <div class="modal">
+		<div class="modal-header">
+		  <h3>Buscar canción</h3>
+		  <button class="close-button" (click)="closeModal()">✖</button>
+		</div>
+		<div class="modal-body">
+		  <input type="text" [(ngModel)]="searchTerm" placeholder="Título de la canción" />
+		  <button (click)="searchSongs()">Buscar</button>
+  
+		  <ul class="search-results">
+			<li *ngFor="let result of searchResults">
+			  {{ result.title }} - {{ result.artist }}
+			</li>
+		  </ul>
+		</div>
+	  </div>
+	</div>
+  </div>
