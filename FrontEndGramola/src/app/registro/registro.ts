@@ -41,6 +41,8 @@ import { RouterModule } from '@angular/router';
 		ok => {
 		  console.log('Registro exitoso', ok);
 		  this.registroOK = true;
+		  this.pwdDiferentes = false;
+		  this.emailInvalido = false;
 		},
 		error => {
 		  console.error('Error en el registro', error);

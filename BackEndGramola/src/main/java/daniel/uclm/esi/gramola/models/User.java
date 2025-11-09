@@ -19,6 +19,9 @@ public class User {
 	@JoinColumn(name = "Creation_Token_ID", referencedColumnName = "id")
     private Token creationToken = new Token();
 
+    private String spotifyAccessToken;
+    private String spotifyPrivateToken;
+
     private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public String getEmail() {
@@ -58,4 +61,22 @@ public class User {
     public boolean checkPwd(String rawPwd) {
         return passwordEncoder.matches(rawPwd, this.pwd);
     }
+
+    public String getSpotifyAccessToken() {
+        return spotifyAccessToken;
+    }
+
+    public void setSpotifyAccessToken(String spotifyAccessToken) {
+        this.spotifyAccessToken = spotifyAccessToken;
+    }  
+
+    public String getSpotifyPrivateToken() {
+        return spotifyPrivateToken;
+    }   
+
+    public void setSpotifyPrivateToken(String spotifyPrivateToken) {
+        this.spotifyPrivateToken = spotifyPrivateToken;
+    }
+
+    
 }
