@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 import { UserService } from '../user.service';
 import { Router } from '@angular/router';
+import { SessionStorageService } from '../sessionstorage.service';
 
 
 @Component({
 	selector: 'app-registro',
 	standalone: true,
-	imports: [CommonModule, FormsModule, Router],
+	imports: [CommonModule, FormsModule],
 	templateUrl: './registro.html',
 	styleUrl: './registro.css'
   })
@@ -22,7 +23,7 @@ import { Router } from '@angular/router';
 	pwdDiferentes : boolean = false
 	emailInvalido : boolean = false
   
-	constructor(private service : UserService, private router: Router) { }
+	constructor(private service : UserService, private session : SessionStorageService, private router: Router) { }
   
 	registrar() {
 	  if (this.pwd1 != this.pwd2) {
@@ -39,15 +40,16 @@ import { Router } from '@angular/router';
   
 	  this.service.register(this.email!, this.pwd1!, this.pwd2!).subscribe(
 		ok => {
-		  console.log('Registro exitoso', ok);
-		  this.pwdDiferentes = false;
-		  this.emailInvalido = false;
-		  alert('Registro exitoso. Revisa su correo electronico para activar su cuenta.');
-		  this.router.navigate(['/MainMenu']);
+			console.log('Registro exitoso', ok);
+			this.pwdDiferentes = false;
+			this.emailInvalido = false;
+			this.session.setEmail(this.email!);
+			alert('Registro exitoso. Revisa su correo electronico para activar su cuenta.');
+			this.router.navigate(['/MainMenu']);
 		},
 		error => {
-		  console.error('Error en el registro', error);
-		  this.registroOK = false;
+			console.error('Error en el registro', error);
+			this.registroOK = false;
 		}
 	  );
 	}

@@ -1,0 +1,49 @@
+/* Título */
+.registro h2 {
+	margin-bottom: 10px;
+}
+
+/* Etiquetas */
+.registro label {
+	font-weight: bold;
+	text-align: left;
+	display: block;
+	margin-bottom: 5px;
+}
+
+/* Inputs */
+.registro input {
+	padding: 8px;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Mensaje de éxito */
+.registro span {
+	color: red;
+	font-size: 0.9rem;
+	font-weight: bold;
+	display: block;
+	margin-top: 10px;
+	text-align: center;
+}
+
+/* Botón */
+.registro button {
+	margin-top: 10px;
+	padding: 10px;
+	border: none;
+	border-radius: 8px;
+	background-color: black;
+	color: white;
+	cursor: pointer;
+	font-weight: bold;
+	transition: background-color 0.3s;
+}
+
+/* Hover del botón */
+.registro button:hover {
+	background-color: #333;
+}

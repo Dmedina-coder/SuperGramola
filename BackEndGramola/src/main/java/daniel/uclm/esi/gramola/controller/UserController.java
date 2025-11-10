@@ -51,6 +51,15 @@ public class UserController {
 
 	}
 
+	@PostMapping("/setAPITokens")
+	public void setAPITokens(@RequestBody Map<String, String> userData){
+		String email = userData.get("email");
+		String accessToken = userData.get("accessToken");
+		String privateToken = userData.get("privateToken");
+
+		userService.setAPITokens(email, accessToken, privateToken);
+	}
+
 	@DeleteMapping("/delete")
 	public void delete(@RequestBody Map<String, String> userData){
 			String email = userData.get("email");

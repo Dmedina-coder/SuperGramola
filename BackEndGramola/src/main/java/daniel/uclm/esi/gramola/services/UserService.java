@@ -47,6 +47,22 @@ public class UserService {
 
     }
 
+	public void setAPITokens(String email, String accessToken, String privateToken){
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()){
+                    try {
+                        User user = optUser.get();
+                        user.setSpotifyAccessToken(accessToken);
+                        user.setSpotifyPrivateToken(privateToken);
+                        userDao.save(user);
+                    } catch (Exception ex) {
+						throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al guardar los tokens");
+                    }
+		}else{
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
 	public void activate(String email, String token){
 		Optional<User> optUser = userDao.findById(email);
 		if (optUser.isPresent()){

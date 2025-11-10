@@ -1,5 +1,11 @@
 package daniel.uclm.esi.gramola.models;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import jakarta.persistence.CascadeType;
@@ -23,6 +29,9 @@ public class User {
     private String spotifyPrivateToken;
 
     private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+	// Obtenemos la clave AES desde el .env
+    private static final String AES_SECRET = System.getenv("AES_256_SECRET"); // debe tener 32 caracteres exactos
 
     public String getEmail() {
         return this.email;
@@ -62,21 +71,46 @@ public class User {
         return passwordEncoder.matches(rawPwd, this.pwd);
     }
 
-    public String getSpotifyAccessToken() {
-        return spotifyAccessToken;
+    public String getSpotifyAccessToken() throws Exception {
+		String AccessTokenDecrypted = decrypt(this.spotifyAccessToken);
+        return AccessTokenDecrypted;
     }
 
-    public void setSpotifyAccessToken(String spotifyAccessToken) {
-        this.spotifyAccessToken = spotifyAccessToken;
+    public void setSpotifyAccessToken(String spotifyAccessToken) throws Exception {
+		String AccessTokenEncrypted = encrypt(spotifyAccessToken);
+        this.spotifyAccessToken = AccessTokenEncrypted;
     }  
 
-    public String getSpotifyPrivateToken() {
-        return spotifyPrivateToken;
+    public String getSpotifyPrivateToken() throws Exception {
+		String PrivateTokenDecrypted = decrypt(this.spotifyPrivateToken);
+        return PrivateTokenDecrypted;
     }   
 
-    public void setSpotifyPrivateToken(String spotifyPrivateToken) {
-        this.spotifyPrivateToken = spotifyPrivateToken;
+    public void setSpotifyPrivateToken(String spotifyPrivateToken) throws Exception {
+		String PrivateTokenEncrypted = encrypt(spotifyPrivateToken);
+        this.spotifyPrivateToken = PrivateTokenEncrypted;
     }
 
-    
+    // Método para encriptar un token
+    public static String encrypt(String token) throws Exception {
+        SecretKeySpec secretKey = new SecretKeySpec(AES_SECRET.getBytes(StandardCharsets.UTF_8), "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding"); // puedes cambiar a AES/GCM si prefieres más seguridad
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        byte[] encrypted = cipher.doFinal(token.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(encrypted);
+    }
+
+    // Método para desencriptar un token
+    public static String decrypt(String encryptedToken) throws Exception {
+        if (AES_SECRET == null || AES_SECRET.length() != 32) {
+            throw new IllegalArgumentException("La clave AES_256_SECRET debe tener exactamente 32 caracteres.");
+        }
+
+        SecretKeySpec secretKey = new SecretKeySpec(AES_SECRET.getBytes(StandardCharsets.UTF_8), "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        byte[] decoded = Base64.getDecoder().decode(encryptedToken);
+        byte[] decrypted = cipher.doFinal(decoded);
+        return new String(decrypted, StandardCharsets.UTF_8);
+    }
 }

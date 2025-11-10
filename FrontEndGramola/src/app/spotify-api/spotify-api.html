@@ -1,0 +1,30 @@
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<div class="registro-container">
+	<form class="registro" (ngSubmit)="registrar()">
+		<div>
+			<a class="back-arrow" routerLink="/">
+				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
+			</a>
+			<h2>Registrar las claves de Spotify</h2>
+		</div>
+
+		<div>
+			<label for="email">Email:</label>
+			<input type="email" id="email" name="email" [(ngModel)]="email" required readonly>
+		</div>
+
+		<div>
+			<label for="password">Access Token</label>
+			<input type="text" id="access" name="access" [(ngModel)]="access" required>
+		</div>
+
+		<div>
+			<label for="confirmPassword">Secret Token</label>
+			<input type="text" id="secret" name="secret" [(ngModel)]="secret" required>
+		</div>
+
+		<button type="submit">Registrar claves</button>
+
+		<span *ngIf="APIinvalida">Las claves API no son validas</span>
+	</form>
+</div>
