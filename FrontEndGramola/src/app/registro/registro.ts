@@ -4,54 +4,80 @@ import { FormsModule } from '@angular/forms';
 import { UserService } from '../user.service';
 import { Router } from '@angular/router';
 import { SessionStorageService } from '../sessionstorage.service';
+import { RouterModule } from '@angular/router';
+import { SpotifyService } from '../spotify.service';
 
 
 @Component({
 	selector: 'app-registro',
 	standalone: true,
-	imports: [CommonModule, FormsModule],
+	imports: [CommonModule, FormsModule, RouterModule],
 	templateUrl: './registro.html',
 	styleUrl: './registro.css'
   })
   export class Registro {
   
-	email? : string
-	pwd1? : string
-	pwd2? : string
+	email?: string
+	pwd1?: string
+	pwd2?: string
+	clientId?: string
+	clientSecret?: string
 
-	registroOK : boolean = false
-	pwdDiferentes : boolean = false
-	emailInvalido : boolean = false
+	registroOK: boolean = false
+	pwdDiferentes: boolean = false
+	emailInvalido: boolean = false
+	camposIncompletos: boolean = false
   
-	constructor(private service : UserService, private session : SessionStorageService, private router: Router) { }
+	constructor(
+		private service: UserService,
+		private session: SessionStorageService,
+		private router: Router,
+		private spotifyService: SpotifyService
+	) { }
   
 	registrar() {
-	  if (this.pwd1 != this.pwd2) {
-		console.error('Las contraseñas no coinciden');
-		this.pwdDiferentes = true;
-		return;
-	  }
-
-	  if (!this.email || !this.email.includes('@')) {
-		console.error('El email es inválido');
-		this.emailInvalido = true;
-		return;
-	  }
-  
-	  this.service.register(this.email!, this.pwd1!, this.pwd2!).subscribe(
-		ok => {
-			console.log('Registro exitoso', ok);
-			this.pwdDiferentes = false;
-			this.emailInvalido = false;
-			this.session.setEmail(this.email!);
-			alert('Registro exitoso. Revisa su correo electronico para activar su cuenta.');
-			this.router.navigate(['/MainMenu']);
-		},
-		error => {
-			console.error('Error en el registro', error);
-			this.registroOK = false;
+		// Validar contraseñas
+		if (this.pwd1 != this.pwd2) {
+			console.error('Las contraseñas no coinciden');
+			this.pwdDiferentes = true;
+			return;
 		}
-	  );
+
+		// Validar email
+		if (!this.email || !this.email.includes('@')) {
+			console.error('El email es inválido');
+			this.emailInvalido = true;
+			return;
+		}
+
+		// Validar campos de Spotify
+		if (!this.clientId || !this.clientSecret) {
+			console.error('Debes completar los campos de Spotify');
+			this.camposIncompletos = true;
+			return;
+		}
+  
+		this.service.register(this.email!, this.pwd1!, this.pwd2!, this.clientId!, this.clientSecret!).subscribe({
+			next: (ok) => {
+				console.log('Registro exitoso', ok);
+				this.pwdDiferentes = false;
+				this.emailInvalido = false;
+				this.camposIncompletos = false;
+				this.session.setEmail(this.email!);
+
+				// Guardar credenciales de Spotify en sessionStorage
+				sessionStorage.setItem('clientId', this.clientId!);
+				sessionStorage.setItem('clientSecret', this.clientSecret!);
+
+				console.log('Usuario y credenciales de Spotify registrados');
+				// Navegar a gramola, donde se iniciará el flujo OAuth
+				this.router.navigate(['/gramola']);
+			},
+			error: (error) => {
+				console.error('Error en el registro', error);
+				this.registroOK = false;
+			}
+		});
 	}
   }
   

@@ -1,7 +1,6 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<div class="login-container">
-	<form class="login" [formGroup]="loginForm" (ngSubmit) = onSubmit()>
-		
+<div class="container">
+	<form class="cuadro" [formGroup]="loginForm" (ngSubmit) = onSubmit()>
 		 <div>
 			<a class="back-arrow" routerLink="/">
 				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
@@ -11,13 +10,13 @@
 		
 		<div>
 			<label for="email">Email:</label>
-			<input type="text" id="email" name="email" placeholder="introduce su email" required>
+			<input type="text" id="email" formControlName="email" placeholder="introduce su email" required>
 			<span *ngIf= "loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
 				El email es obligatorio y debe tener un formato válido.</span>
 		</div>
 		<div>
 			<label for="password">Contraseña:</label>
-			<input type="password" id="pwd" name="pwd" required>
+			<input type="password" id="pwd" formControlName="pwd" required>
 			<span *ngIf="loginForm.get('pwd')?.touched && loginForm.get('pwd')?.invalid">
 				La contraseña es obligatoria.</span>
 		</div>

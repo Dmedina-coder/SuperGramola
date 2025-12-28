@@ -28,6 +28,9 @@ public class UserController {
 		String email = userData.get("email");
 		String password = userData.get("pwd");
 		String password2 = userData.get("pwd2");
+		String accessToken = userData.get("accessToken");
+		String privateToken = userData.get("privateToken");
+		String subscriptionExpiry = userData.get("subscriptionExpiry");
 
 		if (!password.equals(password2)) {
 			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,"Las contraseñas no coinciden");
@@ -39,7 +42,7 @@ public class UserController {
 			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,"El email no es válido");
 		}
 
-		userService.register(email, password);
+		userService.register(email, password, accessToken, privateToken, subscriptionExpiry);
 	}
 
 	@PostMapping("/login")
@@ -49,15 +52,6 @@ public class UserController {
 
 		userService.login(email, pwd);
 
-	}
-
-	@PostMapping("/setAPITokens")
-	public void setAPITokens(@RequestBody Map<String, String> userData){
-		String email = userData.get("email");
-		String accessToken = userData.get("accessToken");
-		String privateToken = userData.get("privateToken");
-
-		userService.setAPITokens(email, accessToken, privateToken);
 	}
 
 	@DeleteMapping("/delete")
@@ -70,7 +64,34 @@ public class UserController {
 
 	@GetMapping("/activate/{email}")
 	public void activate(@PathVariable String email, @RequestParam String token){
-
 		userService.activate(email, token);
+	}
+
+	@GetMapping("/{email}/spotify/access")
+	public String getSpotifyAccessToken(@PathVariable String email) {
+		try {
+			return userService.getSpotifyAccessToken(email);
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
+	}
+
+	@GetMapping("/{email}/spotify/private")
+	public String getSpotifyPrivateToken(@PathVariable String email) {
+		try {
+			return userService.getSpotifyPrivateToken(email);
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
+	}
+
+	@GetMapping("/{email}/subscription/active")
+	public boolean hasActiveSubscription(@PathVariable String email) {
+		try {
+			return userService.hasActiveSubscription(email);
+		} catch (Exception e) {
+			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
 	}
 }

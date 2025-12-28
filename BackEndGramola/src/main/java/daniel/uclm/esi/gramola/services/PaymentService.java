@@ -16,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Service
 public class PaymentService {
 	static {
-	Stripe.apiKey = "sk_test_51IdXSlAa8oIZJkgAbOulAX...";
+	String stripeKey = System.getProperty("stripe_api_private_key");
+	if (stripeKey == null) stripeKey = System.getenv("stripe_api_private_key");
+	Stripe.apiKey = stripeKey;
 	}
 	@Autowired
 	private StripeTransactionDao dao;

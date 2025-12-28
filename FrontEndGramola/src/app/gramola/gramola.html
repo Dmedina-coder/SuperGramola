@@ -1,32 +1,120 @@
-<div class="gramola-container">
-	<h2>Lista de reproducción actual</h2>
-	<ul class="playlist">
-	  <li *ngFor="let song of playlist">
-		{{ song.title }} - {{ song.artist }}
-	  </li>
-	</ul>
-  
-	<button class="search-button" (click)="openModal()">
-	  🔍 Buscar canción
-	</button>
-  
-	<!-- Modal personalizado -->
-	<div class="modal-overlay" *ngIf="showModal">
-	  <div class="modal">
-		<div class="modal-header">
-		  <h3>Buscar canción</h3>
-		  <button class="close-button" (click)="closeModal()">✖</button>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<div class="container">
+	<div class="cuadro">
+		<div>
+			<a class="back-arrow" routerLink="/">
+				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
+			</a>
+			<h2>SuperGramola</h2>
 		</div>
-		<div class="modal-body">
-		  <input type="text" [(ngModel)]="searchTerm" placeholder="Título de la canción" />
-		  <button (click)="searchSongs()">Buscar</button>
-  
-		  <ul class="search-results">
-			<li *ngFor="let result of searchResults">
-			  {{ result.title }} - {{ result.artist }}
-			</li>
-		  </ul>
+		
+		<!-- Paso 1: Selección de Playlist -->
+		<div class="playlist-section" *ngIf="currentStep === 1">
+			<h3>Paso 1: Selecciona una Playlist</h3>
+			<div class="playlists-scrollable" *ngIf="playlists.length > 0">
+				<button 
+					*ngFor="let pl of playlists" 
+					class="playlist-button"
+					(click)="selectPlaylist(pl)">
+					<div class="playlist-info">
+						<span class="playlist-name">{{ pl.name }}</span>
+						<span class="playlist-tracks">{{ pl.tracks.total }} canciones</span>
+					</div>
+				</button>
+			</div>
+			<p *ngIf="playlists.length === 0" class="loading-message">Cargando playlists...</p>
 		</div>
-	  </div>
+
+		<!-- Paso 2: Selección de Dispositivo -->
+		<div class="device-section" *ngIf="currentStep === 2">
+			<h3>Paso 2: Selecciona un Dispositivo</h3>
+			<p class="info-text">Playlist seleccionada: <strong>{{ selectedPlaylist.name }}</strong></p>
+			<div class="devices-scrollable" *ngIf="devices.length > 0">
+				<button 
+					*ngFor="let device of devices" 
+					class="device-button"
+					(click)="selectDevice(device)">
+					<div class="device-info">
+						<span class="device-name">{{ device.name }}</span>
+						<span class="device-type">{{ device.type }} - {{ device.is_active ? '🟢 Activo' : '⚪ Inactivo' }}</span>
+					</div>
+				</button>
+			</div>
+			<p *ngIf="devices.length === 0" class="loading-message">Cargando dispositivos disponibles...</p>
+			<button class="back-button" (click)="currentStep = 1">← Volver a Playlists</button>
+		</div>
+
+		<!-- Paso 3: Canciones y Reproducción -->
+		<div class="tracks-section" *ngIf="currentStep === 3">
+			<h3>🎵 Reproduciendo: {{ selectedPlaylist.name }}</h3>
+			<p class="info-text">Dispositivo: <strong>{{ selectedDevice.name }}</strong></p>
+			<div class="tracks-scrollable">
+				<div 
+					*ngFor="let item of playlistTracks; let i = index" 
+					class="track-item"
+					[class.playing]="isTrackPlaying(item.track)">
+					<span class="track-number">{{ i + 1 }}</span>
+					<div class="track-info">
+						<span class="track-name">{{ item.track.name }}</span>
+						<span class="track-artist">{{ item.track.artists[0].name }}</span>
+					</div>
+					<span class="track-duration">{{ formatDuration(item.track.duration_ms) }}</span>
+				</div>
+			</div>
+			<button class="back-button" (click)="currentStep = 2; loadDevices()">← Cambiar Dispositivo</button>
+		</div>
+	
+		<!-- Modal de búsqueda (visible en cualquier paso) -->
+		<button class="search-button" (click)="openModal()" *ngIf="currentStep === 3">
+			🔍 Buscar canción
+		</button>
+	
+		<div class="modal-overlay" *ngIf="showModal">
+			<div class="modal">
+				<div class="modal-header">
+					<h3>🔍 Buscar canción</h3>
+					<button class="close-button" (click)="closeModal()">✖</button>
+				</div>
+				<div class="modal-body">
+					<input 
+						type="text" 
+						[(ngModel)]="searchTerm" 
+						(ngModelChange)="onSearchChange($event)"
+						placeholder="Busca por canción o artista..."
+						autofocus />
+					
+					<div class="search-status" *ngIf="isSearching">
+						<span class="loading-spinner">🔄</span> Buscando...
+					</div>
+		
+					<div class="search-results" *ngIf="searchResults.length > 0">
+						<div 
+							*ngFor="let track of searchResults" 
+							class="search-result-item"
+							(click)="addToQueue(track)">
+							<img 
+								[src]="track.album.images[2]?.url || track.album.images[0]?.url" 
+								[alt]="track.name"
+								class="track-image">
+							<div class="track-details">
+								<div class="track-title">{{ track.name }}</div>
+								<div class="track-artist-album">
+									{{ track.artists[0].name }} • {{ track.album.name }}
+								</div>
+							</div>
+							<div class="track-add">
+								<span class="material-icons">add_circle_outline</span>
+							</div>
+						</div>
+					</div>
+					<p *ngIf="searchResults.length === 0 && !isSearching && searchTerm" class="no-results">
+						No se encontraron resultados para "{{ searchTerm }}"
+					</p>
+					<p *ngIf="!searchTerm && !isSearching" class="search-hint">
+						💡 Escribe el nombre de una canción o artista
+					</p>
+				</div>
+			</div>
+		</div>
 	</div>
-  </div>
+</div>

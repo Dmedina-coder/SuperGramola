@@ -27,11 +27,19 @@ public class User {
 
     private String spotifyAccessToken;
     private String spotifyPrivateToken;
+    @jakarta.persistence.Column(name = "subscription_expiry")
+    private java.time.LocalDateTime subscriptionExpiry;
 
     private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
 	// Obtenemos la clave AES desde el .env
-    private static final String AES_SECRET = System.getenv("AES_256_SECRET"); // debe tener 32 caracteres exactos
+    private static String getAesSecret() {
+        String s = System.getProperty("AES_256_SECRET");
+        if (s == null || s.length() != 32) {
+            throw new IllegalStateException("AES_256_SECRET no definida o no tiene 32 caracteres");
+        }
+        return s;
+    }
 
     public String getEmail() {
         return this.email;
@@ -66,13 +74,29 @@ public class User {
 		this.creationToken = creationToken;
 	}
 
+    public java.time.LocalDateTime getSubscriptionExpiry() {
+        return this.subscriptionExpiry;
+    }
+
+    public void setSubscriptionExpiry(java.time.LocalDateTime subscriptionExpiry) {
+        this.subscriptionExpiry = subscriptionExpiry;
+    }
+
+    /**
+     * Indica si la suscripción está activa (expiry posterior a ahora).
+     */
+    public boolean hasActiveSubscription() {
+        return this.subscriptionExpiry != null && this.subscriptionExpiry.isAfter(java.time.LocalDateTime.now());
+    }
+
     // Método para verificar si una contraseña coincide con la almacenada
     public boolean checkPwd(String rawPwd) {
         return passwordEncoder.matches(rawPwd, this.pwd);
     }
 
     public String getSpotifyAccessToken() throws Exception {
-		String AccessTokenDecrypted = decrypt(this.spotifyAccessToken);
+        if (this.spotifyAccessToken == null || this.spotifyAccessToken.isBlank()) return "";
+        String AccessTokenDecrypted = decrypt(this.spotifyAccessToken);
         return AccessTokenDecrypted;
     }
 
@@ -82,7 +106,8 @@ public class User {
     }  
 
     public String getSpotifyPrivateToken() throws Exception {
-		String PrivateTokenDecrypted = decrypt(this.spotifyPrivateToken);
+        if (this.spotifyPrivateToken == null || this.spotifyPrivateToken.isBlank()) return "";
+        String PrivateTokenDecrypted = decrypt(this.spotifyPrivateToken);
         return PrivateTokenDecrypted;
     }   
 
@@ -93,7 +118,8 @@ public class User {
 
     // Método para encriptar un token
     public static String encrypt(String token) throws Exception {
-        SecretKeySpec secretKey = new SecretKeySpec(AES_SECRET.getBytes(StandardCharsets.UTF_8), "AES");
+        if (token == null || token.isBlank()) return null;
+        SecretKeySpec secretKey = new SecretKeySpec(getAesSecret().getBytes(StandardCharsets.UTF_8), "AES");
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding"); // puedes cambiar a AES/GCM si prefieres más seguridad
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
         byte[] encrypted = cipher.doFinal(token.getBytes(StandardCharsets.UTF_8));
@@ -102,11 +128,8 @@ public class User {
 
     // Método para desencriptar un token
     public static String decrypt(String encryptedToken) throws Exception {
-        if (AES_SECRET == null || AES_SECRET.length() != 32) {
-            throw new IllegalArgumentException("La clave AES_256_SECRET debe tener exactamente 32 caracteres.");
-        }
-
-        SecretKeySpec secretKey = new SecretKeySpec(AES_SECRET.getBytes(StandardCharsets.UTF_8), "AES");
+        if (encryptedToken == null || encryptedToken.isBlank()) return "";
+        SecretKeySpec secretKey = new SecretKeySpec(getAesSecret().getBytes(StandardCharsets.UTF_8), "AES");
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
         byte[] decoded = Base64.getDecoder().decode(encryptedToken);

@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<div class="registro-container">
-	<form class="registro" (ngSubmit)="registrar()">
+<div class="container">
+	<form class="cuadro" (ngSubmit)="registrar()">
 		<div>
 			<a class="back-arrow" routerLink="/">
 				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
@@ -10,23 +10,45 @@
 
 		<div>
 			<label for="email">Email:</label>
-			<input type="email" id="email" name="email" [(ngModel)]="email" required>
+			<input type="email" id="email" name="email" [(ngModel)]="email" placeholder="tu@email.com" required>
 		</div>
 
 		<div>
 			<label for="password">Contraseña:</label>
-			<input type="password" id="pwd1" name="pwd1" [(ngModel)]="pwd1" required>
+			<input type="password" id="pwd1" name="pwd1" [(ngModel)]="pwd1" placeholder="Mínimo 8 caracteres" required>
 		</div>
 
 		<div>
 			<label for="confirmPassword">Confirmar Contraseña:</label>
-			<input type="password" id="pwd2" name="pwd2" [(ngModel)]="pwd2" required>
+			<input type="password" id="pwd2" name="pwd2" [(ngModel)]="pwd2" placeholder="Repite tu contraseña" required>
 		</div>
 
-		<button type="submit">Registrar</button>
+		<div style="margin-top: 15px; padding: 12px; background-color: #e8f5e9; border-left: 4px solid #1DB954; border-radius: 8px;">
+			<p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a1a; font-size: 0.95rem;">
+				🎵 Conecta con Spotify
+			</p>
+			<p style="margin: 0; font-size: 0.85rem; color: #666; line-height: 1.4;">
+				Crea una app en 
+				<a href="https://developer.spotify.com/dashboard" target="_blank">Spotify Developer Dashboard</a>
+				y agrega <code>http://127.0.0.1:4200/callback</code> como Redirect URI.
+			</p>
+		</div>
+
+		<div>
+			<label for="clientId">Client ID de Spotify:</label>
+			<input type="text" id="clientId" name="clientId" [(ngModel)]="clientId" placeholder="Tu Client ID" required>
+		</div>
+
+		<div>
+			<label for="clientSecret">Client Secret de Spotify:</label>
+			<input type="text" id="clientSecret" name="clientSecret" [(ngModel)]="clientSecret" placeholder="Tu Client Secret" required>
+		</div>
+
+		<button type="submit">Registrar y Conectar</button>
 
 		<span id="valido" *ngIf="registroOK">Registro realizado correctamente</span>
 		<span *ngIf="pwdDiferentes">Las contraseñas no coinciden</span>
-		<span *ngIf="emailInvalido">El email introducido no es valido</span>
+		<span *ngIf="emailInvalido">El email introducido no es válido</span>
+		<span *ngIf="camposIncompletos">Debes completar todos los campos</span>
 	</form>
 </div>
