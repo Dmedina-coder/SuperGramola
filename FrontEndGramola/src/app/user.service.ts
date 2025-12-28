@@ -9,7 +9,16 @@ export class UserService {
 
   constructor(private http: HttpClient) {}
 
-  register(email : string, pwd1 : string, pwd2 : string, accessToken?: string, privateToken?: string) {
+  register(
+    email: string, 
+    pwd1: string, 
+    pwd2: string, 
+    accessToken?: string, 
+    privateToken?: string,
+    nombreBar?: string,
+    ubicacionBar?: string,
+    costeCancion?: number
+  ) {
 	let registerURL : string = this.apiUrl + '/users/register';
     let info: any = {
       email : email,
@@ -23,6 +32,17 @@ export class UserService {
     }
     if (privateToken) {
       info.privateToken = privateToken;
+    }
+    
+    // Añadir información del bar
+    if (nombreBar) {
+      info.nombreBar = nombreBar;
+    }
+    if (ubicacionBar) {
+      info.ubicacionBar = ubicacionBar;
+    }
+    if (costeCancion !== undefined) {
+      info.costeCancion = costeCancion;
     }
     
     return this.http.post<any>(registerURL, info);
@@ -55,5 +75,20 @@ export class UserService {
   getSpotifyPrivateToken(email: string) {
   const url = `${this.apiUrl}/users/${email}/spotify/private`;
   return this.http.get(url, { responseType: 'text' });
+  }
+
+  hasActiveSubscription(email: string) {
+    const url = `${this.apiUrl}/users/${email}/subscription/active`;
+    return this.http.get<boolean>(url);
+  }
+
+  getCosteCancion(email: string) {
+    const url = `${this.apiUrl}/users/${email}/coste-cancion`;
+    return this.http.get<number>(url);
+  }
+
+  setCosteCancion(email: string, costeCancion: number) {
+    const url = `${this.apiUrl}/users/${email}/coste-cancion`;
+    return this.http.put<any>(url, { costeCancion });
   }
 }

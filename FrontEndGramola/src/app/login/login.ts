@@ -33,12 +33,36 @@ export class LoginForm implements OnInit {
 	ngOnInit() {
 		// Verificar si ya hay una sesión activa
 		const savedEmail = this.sessionStorageService.getEmail();
-		const clientId = sessionStorage.getItem('clientId');
-		const clientSecret = sessionStorage.getItem('clientSecret');
+		const clientId = this.sessionStorageService.getAccessToken();
+		const clientSecret = this.sessionStorageService.getPrivateToken();
+		const isPremium = this.sessionStorageService.getPremiumStatus();
 		
 		if (savedEmail && clientId && clientSecret) {
-			console.log('Sesión activa detectada, redirigiendo a gramola...');
-			this.router.navigate(['/gramola']);
+			console.log('Sesión activa detectada, verificando estado de suscripción...');
+			
+			// Verificar el estado actual de la suscripción con el backend
+			this.userService.hasActiveSubscription(savedEmail).subscribe({
+				next: (hasSubscription) => {
+					this.sessionStorageService.setPremiumStatus(hasSubscription);
+					
+					if (hasSubscription) {
+						console.log('Usuario con suscripción activa, redirigiendo a gramola...');
+						this.router.navigate(['/gramola']);
+					} else {
+						console.log('Usuario sin suscripción activa, redirigiendo a payments...');
+						this.router.navigate(['/payments']);
+					}
+				},
+				error: (err) => {
+					console.error('Error verificando suscripción:', err);
+					// Si hay error, usar el valor guardado en sessionStorage
+					if (isPremium) {
+						this.router.navigate(['/gramola']);
+					} else {
+						this.router.navigate(['/payments']);
+					}
+				}
+			});
 		}
 	}
 
@@ -62,21 +86,35 @@ export class LoginForm implements OnInit {
 					// Obtener las credenciales de Spotify del backend
 					forkJoin({
 						clientId: this.userService.getSpotifyAccessToken(email),
-						clientSecret: this.userService.getSpotifyPrivateToken(email)
+						clientSecret: this.userService.getSpotifyPrivateToken(email),
+						hasSubscription: this.userService.hasActiveSubscription(email)
 					}).subscribe({
-						next: ({ clientId, clientSecret }) => {
+						next: ({ clientId, clientSecret, hasSubscription }) => {
 							const hasClientId = !!clientId && clientId.trim().length > 0;
 							const hasClientSecret = !!clientSecret && clientSecret.trim().length > 0;
 							
+							// Guardar estado de suscripción
+							this.sessionStorageService.setPremiumStatus(hasSubscription);
+							
+							// Si tiene credenciales de Spotify, guardarlas
 							if (hasClientId && hasClientSecret) {
-								// Guardar las credenciales en sessionStorage
-								sessionStorage.setItem('clientId', clientId);
-								sessionStorage.setItem('clientSecret', clientSecret);
-								// Navegar a gramola, donde se iniciará el OAuth automáticamente
-								this.router.navigate(['/gramola']);
+								this.sessionStorageService.setSpotifyCredentials(clientId, clientSecret);
+							}
+							
+							// Verificar suscripción antes de navegar
+							if (hasSubscription) {
+								// Usuario con suscripción activa
+								if (hasClientId && hasClientSecret) {
+									// Tiene todo -> ir a gramola
+									this.router.navigate(['/gramola']);
+								} else {
+									// Tiene suscripción pero no credenciales -> registrar Spotify
+									alert('Por favor, registra tus claves de Spotify para usar la gramola.');
+									this.router.navigate(['/registro']);
+								}
 							} else {
-								alert('Debes registrar tus claves de Spotify primero.');
-								this.router.navigate(['/registro']);
+								// Usuario sin suscripción activa -> ir a payments
+								this.router.navigate(['/payments']);
 							}
 						},
 						error: (err) => {

@@ -100,4 +100,77 @@ export class SpotifyService {
 
     return this.http.post(this.tokenUrl, body.toString(), { headers });
   }
+
+  // Obtener dispositivos disponibles
+  getDevices(accessToken: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`
+    });
+    return this.http.get('https://api.spotify.com/v1/me/player/devices', { headers });
+  }
+
+  // Activar un dispositivo
+  activateDevice(accessToken: string, deviceId: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    });
+    const body = {
+      device_ids: [deviceId],
+      play: false
+    };
+    return this.http.put('https://api.spotify.com/v1/me/player', body, { headers });
+  }
+
+  // Obtener canciones de una playlist
+  getPlaylistTracks(accessToken: string, playlistId: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`
+    });
+    return this.http.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, { headers });
+  }
+
+  // Iniciar reproducción
+  startPlayback(accessToken: string, playlistId: string, deviceId: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    });
+    const body = {
+      context_uri: `spotify:playlist:${playlistId}`,
+      device_id: deviceId
+    };
+    return this.http.put('https://api.spotify.com/v1/me/player/play', body, { headers });
+  }
+
+  // Obtener reproducción actual
+  getCurrentPlayback(accessToken: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`
+    });
+    return this.http.get('https://api.spotify.com/v1/me/player/currently-playing', { headers });
+  }
+
+  // Buscar canciones
+  searchTracks(accessToken: string, query: string, limit: number = 20): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`
+    });
+    const encodedQuery = encodeURIComponent(query);
+    const url = `https://api.spotify.com/v1/search?q=${encodedQuery}&type=track&limit=${limit}`;
+    return this.http.get(url, { headers });
+  }
+
+  // Agregar canción a playlist
+  addTrackToPlaylist(accessToken: string, playlistId: string, trackUri: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    });
+    const body = {
+      uris: [trackUri]
+    };
+    const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
+    return this.http.post(url, body, { headers });
+  }
 }

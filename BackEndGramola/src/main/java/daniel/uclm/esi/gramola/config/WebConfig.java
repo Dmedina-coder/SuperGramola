@@ -14,10 +14,10 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Aplica a todos los endpoints
-                        .allowedOrigins("*") // Permite cualquier origen
+                        .allowedOriginPatterns("*") // Permite cualquier origen con credentials
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Métodos permitidos
                         .allowedHeaders("*") // Cualquier cabecera
-                        .allowCredentials(false); // Desactiva cookies (necesario si usas '*')
+                        .allowCredentials(true); // Permite cookies y credenciales
             }
         };
     }

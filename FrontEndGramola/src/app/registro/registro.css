@@ -39,7 +39,7 @@
 	text-align: center;
 }
 
-/* Botón */
+/* Botón 
 .registro button {
 	margin-top: 10px;
 	padding: 10px;
@@ -50,7 +50,7 @@
 	cursor: pointer;
 	font-weight: bold;
 	transition: background-color 0.3s;
-}
+}*/
 
 /* Hover del botón */
 .registro button:hover {

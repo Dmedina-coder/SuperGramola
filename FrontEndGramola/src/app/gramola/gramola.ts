@@ -5,6 +5,8 @@ import { RouterModule } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SessionStorageService } from '../sessionstorage.service';
 import { SpotifyService } from '../spotify.service';
+import { UserService } from '../user.service';
+import { PaymentService } from '../payment.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -31,6 +33,22 @@ export class Gramola implements OnInit, OnDestroy {
   showModal = false;
   currentlyPlayingTrack: any = null;
   private playbackCheckInterval: any = null;
+  costeCancion: number = 0;
+
+  // Sistema de bloqueo con PIN
+  isLocked: boolean = false;
+  showPinModal: boolean = false;
+  pinInput: string = '';
+  savedPin: string = '';
+  pinError: string = '';
+
+  // Sistema de pago por canción
+  showPaymentModal: boolean = false;
+  selectedTrackToPay: any = null;
+  paymentProcessing: boolean = false;
+  paymentError: string = '';
+  cardElement: any = null;
+  cardErrors: string = '';
 
   // Subject para búsqueda en tiempo real
   private searchTerms = new Subject<string>();
@@ -38,13 +56,30 @@ export class Gramola implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private sessionStorageService: SessionStorageService,
-    private spotifyService: SpotifyService
+    private spotifyService: SpotifyService,
+    private userService: UserService,
+    private paymentService: PaymentService
   ) {}
 
   ngOnInit() {
+    // Obtener email del usuario y coste por canción
+    const userEmail = this.sessionStorageService.getEmail();
+    if (userEmail) {
+      this.userService.getCosteCancion(userEmail).subscribe({
+        next: (coste) => {
+          this.costeCancion = Math.round(coste) / 100;
+          console.log('Coste por canción:', this.costeCancion);
+        },
+        error: (error) => {
+          console.error('Error al obtener coste por canción:', error);
+          this.costeCancion = 0;
+        }
+      });
+    }
+
     // Verificar si existen las credenciales de Spotify
-    const clientId = sessionStorage.getItem('clientId');
-    const clientSecret = sessionStorage.getItem('clientSecret');
+    const clientId = this.sessionStorageService.getAccessToken();
+    const clientSecret = this.sessionStorageService.getPrivateToken();
     
     if (!clientId || !clientSecret) {
       console.error('No hay credenciales de Spotify configuradas');
@@ -80,20 +115,16 @@ export class Gramola implements OnInit, OnDestroy {
   }
 
   loadUserPlaylists() {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.accessToken}`
-    });
-
     console.log('Intentando cargar playlists con token:', this.accessToken.substring(0, 20) + '...');
 
-    this.http.get('https://api.spotify.com/v1/me/playlists', { headers })
+    this.spotifyService.getUserPlaylists(this.accessToken)
       .subscribe({
         next: (response: any) => {
           this.playlists = response.items;
           console.log('Playlists cargadas:', this.playlists);
           
           // Cargar playlist guardada si existe
-          const savedPlaylistId = sessionStorage.getItem('selectedPlaylistId');
+          const savedPlaylistId = this.sessionStorageService.getItem('selectedPlaylistId');
           if (savedPlaylistId) {
             const savedPlaylist = this.playlists.find(p => p.id === savedPlaylistId);
             if (savedPlaylist) {
@@ -106,7 +137,7 @@ export class Gramola implements OnInit, OnDestroy {
           if (error.status === 401) {
             console.log('Token expirado o inválido, reiniciando flujo OAuth...');
             // Token expirado o inválido, reiniciar OAuth
-            sessionStorage.removeItem('spotifyAccessToken');
+            this.sessionStorageService.removeItem('spotifyAccessToken');
             this.spotifyService.getToken();
           }
         }
@@ -115,8 +146,8 @@ export class Gramola implements OnInit, OnDestroy {
 
   selectPlaylist(playlist: any) {
     this.selectedPlaylist = playlist;
-    sessionStorage.setItem('selectedPlaylistId', playlist.id);
-    sessionStorage.setItem('selectedPlaylistName', playlist.name);
+    this.sessionStorageService.setItem('selectedPlaylistId', playlist.id);
+    this.sessionStorageService.setItem('selectedPlaylistName', playlist.name);
     console.log('Playlist seleccionada:', playlist.name);
     
     // Avanzar al paso 2: selección de dispositivo
@@ -125,13 +156,9 @@ export class Gramola implements OnInit, OnDestroy {
   }
 
   loadDevices() {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.accessToken}`
-    });
-
     console.log('Cargando dispositivos disponibles...');
 
-    this.http.get('https://api.spotify.com/v1/me/player/devices', { headers })
+    this.spotifyService.getDevices(this.accessToken)
       .subscribe({
         next: (response: any) => {
           this.devices = response.devices;
@@ -150,21 +177,32 @@ export class Gramola implements OnInit, OnDestroy {
 
   selectDevice(device: any) {
     this.selectedDevice = device;
-    sessionStorage.setItem('selectedDeviceId', device.id);
-    sessionStorage.setItem('selectedDeviceName', device.name);
+    this.sessionStorageService.setItem('selectedDeviceId', device.id);
+    this.sessionStorageService.setItem('selectedDeviceName', device.name);
     console.log('Dispositivo seleccionado:', device.name);
     
-    // Avanzar al paso 3: mostrar canciones y comenzar reproducción
-    this.currentStep = 3;
-    this.loadPlaylistTracks(this.selectedPlaylist.id, true);
+    // Transferir reproducción al dispositivo seleccionado (activarlo)
+    console.log('Activando dispositivo:', device.name);
+
+    this.spotifyService.activateDevice(this.accessToken, device.id)
+      .subscribe({
+        next: () => {
+          console.log('Dispositivo activado correctamente');
+          // Avanzar al paso 3: mostrar canciones y comenzar reproducción
+          this.currentStep = 3;
+          this.loadPlaylistTracks(this.selectedPlaylist.id, true);
+        },
+        error: (error) => {
+          console.error('Error al activar dispositivo:', error);
+          // Continuar de todas formas, puede que el dispositivo ya esté activo
+          this.currentStep = 3;
+          this.loadPlaylistTracks(this.selectedPlaylist.id, true);
+        }
+      });
   }
 
   loadPlaylistTracks(playlistId: string, startPlayback: boolean = false) {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.accessToken}`
-    });
-
-    this.http.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, { headers })
+    this.spotifyService.getPlaylistTracks(this.accessToken, playlistId)
       .subscribe({
         next: (response: any) => {
           this.playlistTracks = response.items;
@@ -185,19 +223,9 @@ export class Gramola implements OnInit, OnDestroy {
   }
 
   startPlayback() {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.accessToken}`,
-      'Content-Type': 'application/json'
-    });
-
-    const body = {
-      context_uri: `spotify:playlist:${this.selectedPlaylist.id}`,
-      device_id: this.selectedDevice.id
-    };
-
     console.log('Iniciando reproducción en:', this.selectedDevice.name);
 
-    this.http.put('https://api.spotify.com/v1/me/player/play', body, { headers })
+    this.spotifyService.startPlayback(this.accessToken, this.selectedPlaylist.id, this.selectedDevice.id)
       .subscribe({
         next: () => {
           console.log('Reproducción iniciada correctamente');
@@ -229,11 +257,7 @@ export class Gramola implements OnInit, OnDestroy {
   }
 
   getCurrentPlayback() {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.accessToken}`
-    });
-
-    this.http.get('https://api.spotify.com/v1/me/player/currently-playing', { headers })
+    this.spotifyService.getCurrentPlayback(this.accessToken)
       .subscribe({
         next: (response: any) => {
           if (response && response.item) {
@@ -274,15 +298,8 @@ export class Gramola implements OnInit, OnDestroy {
 
   performSearch(term: string) {
     this.isSearching = true;
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.accessToken}`
-    });
 
-    // Buscar canciones y artistas
-    const query = encodeURIComponent(term);
-    const url = `https://api.spotify.com/v1/search?q=${query}&type=track&limit=20`;
-
-    this.http.get(url, { headers })
+    this.spotifyService.searchTracks(this.accessToken, term, 20)
       .subscribe({
         next: (response: any) => {
           this.searchResults = response.tracks.items;
@@ -297,17 +314,32 @@ export class Gramola implements OnInit, OnDestroy {
   }
 
   addToQueue(track: any) {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.accessToken}`,
-      'Content-Type': 'application/json'
-    });
+    // Verificar si hay que cobrar por la canción
+    if (this.costeCancion > 0) {
+      this.selectedTrackToPay = track;
+      this.showPaymentModal = true;
+      this.paymentError = '';
+      this.cardErrors = '';
+      
+      // Desmontar Card Element anterior si existe
+      if (this.cardElement) {
+        this.cardElement.unmount();
+        this.cardElement = null;
+      }
+      
+      // Inicializar Stripe Card Element después de que el modal se renderice
+      setTimeout(() => {
+        this.initializeCardElement();
+      }, 500);
+      return;
+    }
 
-    const url = `https://api.spotify.com/v1/playlists/${this.selectedPlaylist.id}/tracks`;
-    const body = {
-      uris: [track.uri]
-    };
+    // Si el coste es 0, agregar directamente
+    this.processAddToQueue(track);
+  }
 
-    this.http.post(url, body, { headers })
+  processAddToQueue(track: any) {
+    this.spotifyService.addTrackToPlaylist(this.accessToken, this.selectedPlaylist.id, track.uri)
       .subscribe({
         next: (response: any) => {
           console.log('Canción agregada a la playlist:', track.name);
@@ -328,11 +360,229 @@ export class Gramola implements OnInit, OnDestroy {
       });
   }
 
+  // Modal de pago
+  initializeCardElement() {
+    
+    if (!this.paymentService.isStripeAvailable()) {
+      console.error('Stripe no está disponible');
+      this.paymentError = 'Stripe no está disponible. Por favor, recarga la página.';
+      return;
+    }
+
+    try {
+      // Verificar que el contenedor existe
+      const cardContainer = document.getElementById('song-card-element');
+      
+      if (!cardContainer) {
+        console.error('Contenedor de tarjeta no encontrado en el DOM');
+        this.paymentError = 'Error al cargar el formulario de pago';
+        return;
+      }
+
+      console.log('Dimensiones del contenedor:', {
+        width: cardContainer.offsetWidth,
+        height: cardContainer.offsetHeight,
+        display: window.getComputedStyle(cardContainer).display
+      });
+      
+      // Crear Card Element
+      this.cardElement = this.paymentService.createCardElement();
+      
+      // Montar el Card Element en el DOM
+      this.cardElement.mount('#song-card-element');
+      
+      // Escuchar cambios en el Card Element
+      this.cardElement.on('change', (event: any) => {
+        if (event.error) {
+          this.cardErrors = event.error.message;
+        } else {
+          this.cardErrors = '';
+        }
+      });
+
+      this.cardElement.on('ready', () => {
+      });
+    } catch (error) {
+      console.error('Error al inicializar Card Element:', error);
+      this.paymentError = 'Error al inicializar el formulario de pago';
+    }
+  }
+
+  closePaymentModal() {
+    if (this.cardElement) {
+      this.cardElement.unmount();
+      this.cardElement = null;
+    }
+    this.showPaymentModal = false;
+    this.selectedTrackToPay = null;
+    this.paymentError = '';
+    this.cardErrors = '';
+    
+    // Destruir Card Element
+    if (this.cardElement) {
+      this.cardElement.destroy();
+      this.cardElement = null;
+    }
+  }
+
+  confirmPayment() {
+    if (!this.selectedTrackToPay) return;
+
+    const userEmail = this.sessionStorageService.getEmail();
+    if (!userEmail) {
+      this.paymentError = 'No se pudo obtener el email del usuario';
+      return;
+    }
+
+    if (!this.cardElement) {
+      this.paymentError = 'Error: Formulario de pago no inicializado';
+      return;
+    }
+
+    this.paymentProcessing = true;
+    this.paymentError = '';
+    this.cardErrors = '';
+
+    // Preparar el pago con Stripe
+    this.paymentService.prepareSongPayment(userEmail, this.costeCancion).subscribe({
+      next: (transactionDetails) => {
+        
+        const clientSecret = transactionDetails.clientSecret;
+        const transactionId = transactionDetails.transactionId;
+        let paymentIntentId = transactionDetails.paymentIntentId;
+
+        if (!clientSecret) {
+          this.paymentError = 'Error al preparar el pago';
+          this.paymentProcessing = false;
+          return;
+        }
+
+        // Confirmar pago con Stripe usando Card Element
+        this.paymentService.confirmCardPayment(
+          clientSecret,
+          this.cardElement,
+          userEmail,
+          userEmail
+        )
+          .then((result) => {
+            if (result.error) {
+              // Error al procesar el pago
+              console.error('Error en Stripe:', result.error.message);
+              this.paymentError = result.error.message;
+              this.paymentProcessing = false;
+            } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+              // Obtener el paymentIntentId del resultado de Stripe (más confiable)
+              const stripePaymentIntentId = result.paymentIntent.id;
+              
+              // Usar el ID de Stripe en lugar del que viene del backend
+              const finalPaymentIntentId = stripePaymentIntentId || paymentIntentId;
+              
+              const confirmData = {
+                email: userEmail,
+                paymentIntentId: finalPaymentIntentId,
+                amount: this.costeCancion,
+                transactionId: transactionId,
+                trackUri: this.selectedTrackToPay.uri
+              };
+              
+              this.paymentService.confirmSongPaymentInBackend(
+                userEmail,
+                finalPaymentIntentId,
+                this.costeCancion,
+                transactionId,
+                this.selectedTrackToPay.uri
+              ).subscribe({
+                next: () => {
+                  console.log(`Pago de ${this.costeCancion.toFixed(2)}€ procesado correctamente`);
+                  this.paymentProcessing = false;
+                  
+                  // Pago exitoso, agregar canción
+                  this.processAddToQueue(this.selectedTrackToPay);
+                  this.closePaymentModal();
+                },
+                error: (error) => {
+                  console.error('Datos enviados:', confirmData);
+                  console.error('Error detallado:', error.error);
+                  
+                  // Mostrar información detallada del error
+                  let errorMsg = 'Error al confirmar el pago en el servidor.';
+                  if (error.error && error.error.message) {
+                    errorMsg += '\n' + error.error.message;
+                  }
+                  alert(errorMsg + '\n\nVerifica la consola del backend y asegúrate de que el endpoint /payments/confirm-song está implementado.');
+                  
+                  this.paymentError = 'Error al confirmar el pago';
+                  this.paymentProcessing = false;
+                }
+              });
+            }
+          })
+          .catch((error) => {
+            console.error('Error en el proceso de pago:', error);
+            this.paymentError = 'Error al procesar el pago';
+            this.paymentProcessing = false;
+          });
+      },
+      error: (error) => {
+        console.error('Error al preparar pago:', error);
+        this.paymentError = 'Error al preparar el pago';
+        this.paymentProcessing = false;
+      }
+    });
+  }
+
   // Formatear duración de milisegundos a mm:ss
   formatDuration(ms: number): string {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  // Sistema de bloqueo con PIN
+  toggleLock() {
+    this.showPinModal = true;
+    this.pinInput = '';
+    this.pinError = '';
+  }
+
+  closePinModal() {
+    this.showPinModal = false;
+    this.pinInput = '';
+    this.pinError = '';
+  }
+
+  onPinInput(event: any) {
+    const value = event.target.value;
+    // Solo permitir números y máximo 4 dígitos
+    this.pinInput = value.replace(/\D/g, '').slice(0, 4);
+    event.target.value = this.pinInput;
+    this.pinError = '';
+  }
+
+  confirmPin() {
+    if (this.pinInput.length !== 4) {
+      this.pinError = 'El PIN debe tener 4 dígitos';
+      return;
+    }
+
+    if (!this.isLocked) {
+      // Bloquear: guardar el PIN
+      this.savedPin = this.pinInput;
+      this.isLocked = true;
+      this.closePinModal();
+      console.log('Aplicación bloqueada');
+    } else {
+      // Desbloquear: verificar el PIN
+      if (this.pinInput === this.savedPin) {
+        this.isLocked = false;
+        this.savedPin = '';
+        this.closePinModal();
+        console.log('Aplicación desbloqueada');
+      } else {
+        this.pinError = 'PIN incorrecto';
+        this.pinInput = '';
+      }
+    }
   }
 
   ngOnDestroy() {

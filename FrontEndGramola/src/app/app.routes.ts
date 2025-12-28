@@ -4,6 +4,7 @@ import { LoginForm } from './login/login';
 import { MainMenu } from './main-menu/main-menu';
 import { Gramola } from './gramola/gramola';
 import { CallbackComponent } from './callback/callback';
+import { Payments } from './payments/payments';
 import { NgModule } from '@angular/core';
 
 export const routes: Routes = [
@@ -11,6 +12,7 @@ export const routes: Routes = [
 	{ path: 'login', component: LoginForm },
 	{ path: 'register', component: Registro },
 	{ path: 'gramola', component: Gramola },
-	{ path: 'callback', component: CallbackComponent }
+	{ path: 'callback', component: CallbackComponent },
+	{ path: 'payments', component: Payments }
 
 ];

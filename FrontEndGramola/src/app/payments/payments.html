@@ -1,1 +1,60 @@
-<p>payments works!</p>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<div class="container">
+  <div class="cuadro">
+    <h2>Renovar Suscripción Mensual</h2>
+    
+    <!-- Información del coste -->
+    <div class="cost-info">
+      <p class="cost-label">Coste de suscripción mensual:</p>
+      <p class="cost-amount" *ngIf="!loading">{{ subscriptionCost | number:'1.2-2' }}€</p>
+      <p class="loading-text" *ngIf="loading">Obteniendo información...</p>
+    </div>
+
+    <!-- Mensajes de error y éxito -->
+    <div class="alert alert-error" *ngIf="error">
+      {{ error }}
+    </div>
+    <div class="alert alert-success" *ngIf="success">
+      {{ success }}
+    </div>
+
+    <!-- Formulario de pago -->
+    <form (ngSubmit)="processPayment()" #paymentForm="ngForm">
+      <div class="form-group">
+        <label for="cardHolder">Titular de la tarjeta</label>
+        <input
+          type="text"
+          id="cardHolder"
+          name="cardHolder"
+          [(ngModel)]="cardHolder"
+          placeholder="Nombre como aparece en la tarjeta"
+          required
+          [disabled]="loading"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Datos de la tarjeta</label>
+        <div id="card-element" class="stripe-card-element">
+          <!-- Stripe Card Element se montará aquí -->
+        </div>
+        <div id="card-errors" class="card-errors" role="alert"></div>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="btn btn-secondary" (click)="goBack()" [disabled]="loading">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading || !cardHolder">
+          <span *ngIf="!loading">Pagar {{ subscriptionCost | number:'1.2-2' }}€</span>
+          <span *ngIf="loading">Procesando...</span>
+        </button>
+      </div>
+    </form>
+
+    <div class="security-info">
+      <p>🔒 Pago seguro y encriptado</p>
+    </div>
+  </div>
+</div>

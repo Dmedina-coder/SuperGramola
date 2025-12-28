@@ -1,7 +1,19 @@
 <div class="container">
 	<form class="cuadro">
 		<h2>Super Gramola</h2>
-		<button type="button" (click)="goToRegister()">Registrarse</button>
-		<button type="button" (click)="goToLogin()">Iniciar Sesión</button>
+		
+		<!-- Botones cuando NO hay sesión -->
+		<div *ngIf="!userEmail">
+			<button type="button" (click)="goToRegister()">Registrarse</button>
+			<button type="button" (click)="goToLogin()">Iniciar Sesión</button>
+		</div>
+		
+		<!-- Botones cuando HAY sesión -->
+		<div *ngIf="userEmail">
+			<p class="welcome-message">Bienvenido, <strong>{{ userEmail }}</strong></p>
+			<button type="button" (click)="goToGramola()">Acceder a Gramola</button>
+			<button type="button" (click)="goToModifyUser()">Modificar Datos</button>
+			<button type="button" class="logout-btn" (click)="logout()">Cerrar Sesión</button>
+		</div>
 	</form>
 </div>

@@ -22,6 +22,9 @@ import { SpotifyService } from '../spotify.service';
 	pwd2?: string
 	clientId?: string
 	clientSecret?: string
+	nombreBar?: string
+	ubicacionBar?: string
+	costeCancion?: number
 
 	registroOK: boolean = false
 	pwdDiferentes: boolean = false
@@ -56,8 +59,24 @@ import { SpotifyService } from '../spotify.service';
 			this.camposIncompletos = true;
 			return;
 		}
+
+		// Validar campos del bar
+		if (!this.nombreBar || !this.ubicacionBar || !this.costeCancion) {
+			console.error('Debes completar todos los campos del bar');
+			this.camposIncompletos = true;
+			return;
+		}
   
-		this.service.register(this.email!, this.pwd1!, this.pwd2!, this.clientId!, this.clientSecret!).subscribe({
+		this.service.register(
+			this.email!, 
+			this.pwd1!, 
+			this.pwd2!, 
+			this.clientId!, 
+			this.clientSecret!,
+			this.nombreBar!,
+			this.ubicacionBar!,
+			this.costeCancion!
+		).subscribe({
 			next: (ok) => {
 				console.log('Registro exitoso', ok);
 				this.pwdDiferentes = false;

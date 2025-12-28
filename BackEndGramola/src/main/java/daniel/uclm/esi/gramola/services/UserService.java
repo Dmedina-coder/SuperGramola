@@ -92,7 +92,17 @@ public class UserService {
 	}
 
     public void delete(String email, String pwd) {
-
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			boolean matches = passwordEncoder.matches(pwd, user.getPwd());
+			if (!matches) {
+				throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Contraseña incorrecta");
+			}
+			userDao.delete(user);
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
     }
 
 	public void activate(String email, String token){
@@ -138,6 +148,57 @@ public class UserService {
 		if (optUser.isPresent()) {
 			User user = optUser.get();
 			return user.hasActiveSubscription();
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
+	public java.util.Map<String, Object> getUserData(String email) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			java.util.Map<String, Object> userData = new java.util.HashMap<>();
+			userData.put("email", user.getEmail());
+			userData.put("isActive", user.isActive());
+			userData.put("hasActiveSubscription", user.hasActiveSubscription());
+			userData.put("subscriptionExpiry", user.getSubscriptionExpiry());
+			userData.put("ubicacionBar", user.getUbicacionBar());
+			userData.put("nombreBar", user.getNombreBar());
+			userData.put("costeCancion", user.getCosteCancion());
+			return userData;
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
+	public void setBarData(String email, String ubicacionBar, String nombreBar) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			user.setUbicacionBar(ubicacionBar);
+			user.setNombreBar(nombreBar);
+			userDao.save(user);
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
+	public void setCosteCancion(String email, Double costeCancion) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			user.setCosteCancion(costeCancion);
+			userDao.save(user);
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
+	public Double getCosteCancion(String email) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			return user.getCosteCancion();
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
 		}

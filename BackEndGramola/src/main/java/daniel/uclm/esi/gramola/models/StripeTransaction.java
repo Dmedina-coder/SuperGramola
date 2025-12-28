@@ -15,6 +15,7 @@ public class StripeTransaction {
 	private String data;
 
 	private String email;
+	private String trackUri;
 
 	public StripeTransaction() {
 		this.id = java.util.UUID.randomUUID().toString();
@@ -42,5 +43,13 @@ public class StripeTransaction {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public String getTrackUri() {
+		return trackUri;
+	}
+
+	public void setTrackUri(String trackUri) {
+		this.trackUri = trackUri;
 	}
 }

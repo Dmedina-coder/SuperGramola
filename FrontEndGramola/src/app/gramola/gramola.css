@@ -260,21 +260,36 @@
   background: white;
   padding: 25px;
   border-radius: 15px;
-  width: 400px;
+  width: 450px;
   max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 15px;
+}
+
+.modal-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.4rem;
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1DB954;
+  font-weight: 600;
 }
 
 .close-button {
@@ -429,4 +444,227 @@
   color: #999;
   padding: 20px;
   font-style: italic;
+}
+
+/* Sistema de bloqueo */
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.header-container h2 {
+  flex: 1;
+  margin: 0;
+}
+
+.header-with-lock {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.lock-button {
+  background: #f0f0f0;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.lock-button:hover {
+  background: #e0e0e0;
+  transform: scale(1.05);
+}
+
+.lock-button .material-icons {
+  font-size: 24px;
+  color: #333;
+}
+
+/* Modal de PIN */
+.pin-modal {
+  max-width: 350px;
+}
+
+.pin-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 30px 20px;
+}
+
+.pin-instruction {
+  text-align: center;
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+}
+
+.pin-input {
+  width: 180px;
+  padding: 15px;
+  font-size: 32px;
+  text-align: center;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  letter-spacing: 15px;
+  font-weight: bold;
+}
+
+.pin-input:focus {
+  outline: none;
+  border-color: #1DB954;
+}
+
+.pin-error {
+  color: #e74c3c;
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+}
+
+.btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: #1DB954;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1ed760;
+  transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Modal de pago por canción */
+.payment-track-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.payment-track-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.payment-track-info h4 {
+  margin: 10px 0 5px 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.payment-track-info p {
+  margin: 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.payment-amount {
+  background: linear-gradient(135deg, #1DB954, #1ed760);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.payment-amount h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.payment-instruction {
+  text-align: center;
+  color: #666;
+  margin: 15px 0;
+  font-size: 0.95rem;
+}
+
+.payment-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+/* Stripe Card Element en modal de pago */
+.card-element-container {
+  margin: 20px 0;
+  width: 100%;
+}
+
+#song-card-element {
+  padding: 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  min-height: 44px;
+  height: auto;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+#song-card-element.StripeElement {
+  padding: 15px;
+  display: block !important;
+  min-height: 44px !important;
+}
+
+#song-card-element:focus-within {
+  border-color: #1DB954;
+  outline: none;
+}
+
+/* Asegurar que el iframe de Stripe sea visible */
+#song-card-element iframe {
+  display: block !important;
+  min-height: 44px !important;
+  height: 100% !important;
+  width: 100% !important;
+  border: none !important;
+}
+
+/* Forzar visibilidad del contenedor de Stripe */
+#song-card-element .StripeElement,
+#song-card-element .__PrivateStripeElement {
+  display: block !important;
+  height: auto !important;
+  min-height: 44px !important;
 }

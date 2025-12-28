@@ -1,11 +1,14 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <div class="container">
 	<div class="cuadro">
-		<div>
-			<a class="back-arrow" routerLink="/">
+		<div class="header-container">
+			<a class="back-arrow" routerLink="/" *ngIf="!isLocked">
 				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
 			</a>
 			<h2>SuperGramola</h2>
+			<button class="lock-button" (click)="toggleLock()" [title]="isLocked ? 'Desbloquear' : 'Bloquear'">
+				<span class="material-icons">{{ isLocked ? 'lock' : 'lock_open' }}</span>
+			</button>
 		</div>
 		
 		<!-- Paso 1: Selección de Playlist -->
@@ -41,13 +44,18 @@
 				</button>
 			</div>
 			<p *ngIf="devices.length === 0" class="loading-message">Cargando dispositivos disponibles...</p>
-			<button class="back-button" (click)="currentStep = 1">← Volver a Playlists</button>
+			<button class="back-button" (click)="currentStep = 1" *ngIf="!isLocked">← Volver a Playlists</button>
 		</div>
 
 		<!-- Paso 3: Canciones y Reproducción -->
 		<div class="tracks-section" *ngIf="currentStep === 3">
-			<h3>🎵 Reproduciendo: {{ selectedPlaylist.name }}</h3>
-			<p class="info-text">Dispositivo: <strong>{{ selectedDevice.name }}</strong></p>
+			<div class="header-with-lock">
+				<div>
+					<h3>🎵 Reproduciendo: {{ selectedPlaylist.name }}</h3>
+					<p class="info-text">Dispositivo: <strong>{{ selectedDevice.name }}</strong></p>
+				</div>
+				
+			</div>
 			<div class="tracks-scrollable">
 				<div 
 					*ngFor="let item of playlistTracks; let i = index" 
@@ -61,7 +69,7 @@
 					<span class="track-duration">{{ formatDuration(item.track.duration_ms) }}</span>
 				</div>
 			</div>
-			<button class="back-button" (click)="currentStep = 2; loadDevices()">← Cambiar Dispositivo</button>
+			<button class="back-button" (click)="currentStep = 2; loadDevices()" *ngIf="!isLocked">← Cambiar Dispositivo</button>
 		</div>
 	
 		<!-- Modal de búsqueda (visible en cualquier paso) -->
@@ -72,7 +80,10 @@
 		<div class="modal-overlay" *ngIf="showModal">
 			<div class="modal">
 				<div class="modal-header">
-					<h3>🔍 Buscar canción</h3>
+					<div>
+						<h3>🔍 Buscar canción</h3>
+						<h4>Coste: {{ costeCancion.toFixed(2) }}€</h4>
+					</div>
 					<button class="close-button" (click)="closeModal()">✖</button>
 				</div>
 				<div class="modal-body">
@@ -113,6 +124,86 @@
 					<p *ngIf="!searchTerm && !isSearching" class="search-hint">
 						💡 Escribe el nombre de una canción o artista
 					</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal de PIN para bloqueo/desbloqueo -->
+		<div class="modal-overlay" *ngIf="showPinModal">
+			<div class="modal pin-modal">
+				<div class="modal-header">
+					<h3>
+						<!--<span class="material-icons">{{ isLocked ? 'lock' : 'lock_open' }}</span>-->
+						{{ isLocked ? 'Desbloquear' : 'Bloquear' }} Gramola
+					</h3>
+					
+				</div>
+				<div class="modal-body pin-modal-body">
+					<p class="pin-instruction">
+						{{ isLocked ? 'Introduce el PIN para desbloquear' : 'Introduce un PIN de 4 dígitos' }}
+					</p>
+					<input 
+						type="password" 
+						[(ngModel)]="pinInput"
+						(input)="onPinInput($event)"
+						placeholder="****"
+						class="pin-input"
+						maxlength="4"
+						autofocus />
+					<p class="pin-error" *ngIf="pinError">{{ pinError }}</p>
+					<button 
+						class="btn btn-primary"
+						(click)="confirmPin()"
+						[disabled]="pinInput.length !== 4">
+						{{ isLocked ? 'Desbloquear' : 'Bloquear' }}
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal de Pago por Canción -->
+		<div class="modal-overlay" *ngIf="showPaymentModal">
+			<div class="modal pin-modal">
+				<div class="modal-header">
+					<h3>💳 Pagar Canción</h3>
+					<button class="close-button" (click)="closePaymentModal()">✖</button>
+				</div>
+				<div class="modal-body pin-modal-body">
+					<div class="payment-track-info" *ngIf="selectedTrackToPay">
+						<img [src]="selectedTrackToPay.album.images[2]?.url || selectedTrackToPay.album.images[0]?.url" 
+							 [alt]="selectedTrackToPay.name"
+							 class="payment-track-image">
+						<h4>{{ selectedTrackToPay.name }}</h4>
+						<p>{{ selectedTrackToPay.artists[0].name }}</p>
+					</div>
+					<div class="payment-amount">
+						<h2>{{ costeCancion.toFixed(2) }}€</h2>
+					</div>
+					<p class="payment-instruction">
+						Ingresa los datos de tu tarjeta para completar el pago
+					</p>
+					
+					<!-- Stripe Card Element -->
+					<div class="card-element-container">
+						<div id="song-card-element"></div>
+						<p class="pin-error" *ngIf="cardErrors">{{ cardErrors }}</p>
+					</div>
+					
+					<p class="pin-error" *ngIf="paymentError">{{ paymentError }}</p>
+					<div class="payment-buttons">
+						<button 
+							class="btn btn-primary"
+							(click)="confirmPayment()"
+							[disabled]="paymentProcessing">
+							{{ paymentProcessing ? 'Procesando...' : 'Confirmar Pago' }}
+						</button>
+						<button 
+							class="btn btn-secondary"
+							(click)="closePaymentModal()"
+							[disabled]="paymentProcessing">
+							Cancelar
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>

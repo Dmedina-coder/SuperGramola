@@ -29,6 +29,10 @@ public class User {
     private String spotifyPrivateToken;
     @jakarta.persistence.Column(name = "subscription_expiry")
     private java.time.LocalDateTime subscriptionExpiry;
+    
+    private String ubicacionBar;
+    private String nombreBar;
+    private Double costeCancion;
 
     private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -79,7 +83,7 @@ public class User {
     }
 
     public void setSubscriptionExpiry(java.time.LocalDateTime subscriptionExpiry) {
-        this.subscriptionExpiry = subscriptionExpiry;
+        this.subscriptionExpiry = subscriptionExpiry.plusMonths(1);
     }
 
     /**
@@ -114,6 +118,30 @@ public class User {
     public void setSpotifyPrivateToken(String spotifyPrivateToken) throws Exception {
 		String PrivateTokenEncrypted = encrypt(spotifyPrivateToken);
         this.spotifyPrivateToken = PrivateTokenEncrypted;
+    }
+
+    public String getUbicacionBar() {
+        return this.ubicacionBar;
+    }
+
+    public void setUbicacionBar(String ubicacionBar) {
+        this.ubicacionBar = ubicacionBar;
+    }
+
+    public String getNombreBar() {
+        return this.nombreBar;
+    }
+
+    public void setNombreBar(String nombreBar) {
+        this.nombreBar = nombreBar;
+    }
+
+    public Double getCosteCancion() {
+        return this.costeCancion;
+    }
+
+    public void setCosteCancion(Double costeCancion) {
+        this.costeCancion = costeCancion;
     }
 
     // Método para encriptar un token
