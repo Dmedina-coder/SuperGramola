@@ -9,11 +9,12 @@ public class Token {
 	@Id @Column(length = 36)
 	private String id;
 	private long creationTime;
-	private long usedTime = 0;
+	private Long usedTime;
 
 	public Token() {
 		this.id = java.util.UUID.randomUUID().toString();
 		this.creationTime = System.currentTimeMillis();
+		this.usedTime = null;
 	}
 
 	public String getID() {
@@ -33,7 +34,7 @@ public class Token {
 	}
 
 	public boolean isUsed() {
-		return this.usedTime != 0;
+		return this.usedTime > 0;
 	}
 
 	public void setUsedTime() {
@@ -42,6 +43,22 @@ public class Token {
 
 	public boolean equals(String tokenID) {
 		return this.id.equals(tokenID);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof String) {
+			return this.id.equals(obj);
+		}
+		if (obj instanceof Token) {
+			return this.id.equals(((Token) obj).id);
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return this.id.hashCode();
 	}
 	
 }

@@ -3,6 +3,7 @@ package daniel.uclm.esi.gramola.services;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,12 @@ public class UserService {
 
     @Autowired
     private UserDao userDao;
+
+	@Autowired
+	private EmailService emailService;
+
+	@Value("${app.base.url}")
+	private String baseUrl;
 
     private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -38,9 +45,9 @@ public class UserService {
 				if (privateToken != null && !privateToken.isBlank()) {
 					user.setSpotifyPrivateToken(privateToken);
 				}
-				// Set subscriptionExpiry: if not provided, default to now + 1 month
+				// Set subscriptionExpiry: if not provided, default to yesterday (inactive subscription)
 				if (subscriptionExpiry == null || subscriptionExpiry.isBlank()) {
-					user.setSubscriptionExpiry(java.time.LocalDateTime.now().plusMonths(1));
+					user.setSubscriptionExpiry(java.time.LocalDateTime.now().minusDays(1));
 				} else {
 					// Parse subscriptionExpiry if provided (accepts ISO-8601 or epoch millis)
 					java.time.LocalDateTime expiry = parseExpiry(subscriptionExpiry);
@@ -53,6 +60,21 @@ public class UserService {
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al guardar los tokens");
 			}
 			this.userDao.save(user);
+			
+			// Enviar correo de activación
+			try {
+				String token = user.getCreationToken().getID();
+				String activationUrl = baseUrl + "/users/activate/" + email + "?token=" + token;
+				
+				String subject = "Activa tu cuenta en Gramola";
+				String htmlContent = buildActivationEmailHtml(email, activationUrl);
+				
+				emailService.sendHtmlEmail(email, subject, htmlContent);
+				logger.info("Correo de activación enviado a: {}", email);
+			} catch (Exception e) {
+				logger.error("Error al enviar correo de activación a {}: {}", email, e.getMessage(), e);
+				// No lanzamos excepción para no interrumpir el registro
+			}
 		}else{
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "El usuario ya existe");
 		}
@@ -91,14 +113,10 @@ public class UserService {
 		throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "subscriptionExpiry debe ser ISO-8601 o epoch millis");
 	}
 
-    public void delete(String email, String pwd) {
+    public void delete(String email) {
 		Optional<User> optUser = userDao.findById(email);
 		if (optUser.isPresent()) {
 			User user = optUser.get();
-			boolean matches = passwordEncoder.matches(pwd, user.getPwd());
-			if (!matches) {
-				throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Contraseña incorrecta");
-			}
 			userDao.delete(user);
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
@@ -116,6 +134,27 @@ public class UserService {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token incorrecto");
 			}
 		}else{
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
+	public boolean isUserActive(String email) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			return user.isActive();
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
+	public String getActivationUrl(String email) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			String token = user.getCreationToken().getID();
+			return baseUrl + "/users/activate/" + email + "?token=" + token;
+		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
 		}
 	}
@@ -202,5 +241,52 @@ public class UserService {
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
 		}
+	}
+
+	/**
+	 * Construye el contenido HTML del correo de activación
+	 */
+	private String buildActivationEmailHtml(String email, String activationUrl) {
+		return """
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<style>
+					body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+					.container { max-width: 600px; margin: 0 auto; padding: 20px; }
+					.header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+					.content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
+					.button { display: inline-block; padding: 12px 30px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+					.button:hover { background-color: #45a049; }
+					.footer { text-align: center; margin-top: 20px; color: #777; font-size: 12px; }
+				</style>
+			</head>
+			<body>
+				<div class="container">
+					<div class="header">
+						<h1>¡Bienvenido a Gramola!</h1>
+					</div>
+					<div class="content">
+						<h2>Hola,</h2>
+						<p>Gracias por registrarte en Gramola con el email: <strong>%s</strong></p>
+						<p>Para activar tu cuenta, por favor haz clic en el siguiente enlace:</p>
+						<p style="text-align: center;">
+							<a href="%s" class="button">Activar mi cuenta</a>
+						</p>
+						<p>O copia y pega este enlace en tu navegador:</p>
+						<p style="word-break: break-all; background-color: #e9e9e9; padding: 10px; border-radius: 3px;">
+							%s
+						</p>
+						<p><strong>Nota:</strong> Este enlace es único y solo puede usarse una vez.</p>
+					</div>
+					<div class="footer">
+						<p>Este es un correo automático, por favor no responder.</p>
+						<p>&copy; 2026 Gramola - Sistema de música para bares</p>
+					</div>
+				</div>
+			</body>
+			</html>
+			""".formatted(email, activationUrl, activationUrl);
 	}
 }

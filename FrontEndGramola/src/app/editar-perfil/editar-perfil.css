@@ -1,0 +1,50 @@
+/* Título */
+.editar-perfil h2 {
+	margin-bottom: 10px;
+}
+
+/* Etiquetas */
+.editar-perfil label {
+	font-weight: bold;
+	text-align: left;
+	display: block;
+	margin-bottom: 5px;
+}
+
+/* Inputs */
+.editar-perfil input {
+	padding: 8px;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.editar-perfil input:disabled {
+	background-color: #f5f5f5;
+	cursor: not-allowed;
+}
+
+/* Mensaje de éxito */
+.editar-perfil span {
+	color: red;
+	font-size: 0.9rem;
+	font-weight: bold;
+	display: block;
+	margin-top: 10px;
+	text-align: center;
+}
+
+.editar-perfil span #valido {
+	color: green;
+	font-size: 0.9rem;
+	font-weight: bold;
+	display: block;
+	margin-top: 10px;
+	text-align: center;
+}
+
+/* Hover del botón */
+.editar-perfil button:hover {
+	background-color: #333;
+}

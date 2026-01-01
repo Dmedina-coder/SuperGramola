@@ -87,9 +87,10 @@ export class LoginForm implements OnInit {
 					forkJoin({
 						clientId: this.userService.getSpotifyAccessToken(email),
 						clientSecret: this.userService.getSpotifyPrivateToken(email),
-						hasSubscription: this.userService.hasActiveSubscription(email)
+						hasSubscription: this.userService.hasActiveSubscription(email),
+						isActive: this.userService.isActive(email)
 					}).subscribe({
-						next: ({ clientId, clientSecret, hasSubscription }) => {
+						next: ({ clientId, clientSecret, hasSubscription, isActive }) => {
 							const hasClientId = !!clientId && clientId.trim().length > 0;
 							const hasClientSecret = !!clientSecret && clientSecret.trim().length > 0;
 							
@@ -99,6 +100,12 @@ export class LoginForm implements OnInit {
 							// Si tiene credenciales de Spotify, guardarlas
 							if (hasClientId && hasClientSecret) {
 								this.sessionStorageService.setSpotifyCredentials(clientId, clientSecret);
+							}
+
+							// Revisar si cuenta esta activa
+							if (!isActive) {
+								alert('Tu cuenta no está activa. Por favor, verifica tu email para activarla.');
+								return;
 							}
 							
 							// Verificar suscripción antes de navegar
@@ -126,7 +133,16 @@ export class LoginForm implements OnInit {
 				},
 				error: (error) => {
 					console.error('Error en login:', error);
-					alert('Error en el login. Verifica tus credenciales.');
+					
+					// Mostrar mensaje específico del backend si está disponible
+					let errorMessage = 'Error en el login. Verifica tus credenciales.';
+					if (error.error && error.error.message) {
+						errorMessage = error.error.message;
+					} else if (error.message) {
+						errorMessage = error.message;
+					}
+					
+					alert(errorMessage);
 				}
 			});
 		}

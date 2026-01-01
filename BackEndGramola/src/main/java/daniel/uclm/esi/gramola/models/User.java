@@ -83,12 +83,9 @@ public class User {
     }
 
     public void setSubscriptionExpiry(java.time.LocalDateTime subscriptionExpiry) {
-        this.subscriptionExpiry = subscriptionExpiry.plusMonths(1);
+        this.subscriptionExpiry = subscriptionExpiry;
     }
 
-    /**
-     * Indica si la suscripción está activa (expiry posterior a ahora).
-     */
     public boolean hasActiveSubscription() {
         return this.subscriptionExpiry != null && this.subscriptionExpiry.isAfter(java.time.LocalDateTime.now());
     }

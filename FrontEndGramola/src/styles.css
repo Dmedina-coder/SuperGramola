@@ -129,6 +129,33 @@ body::before {
 	box-shadow: 0 2px 10px rgba(29, 185, 84, 0.3);
 }
 
+.cuadro button[type="cancel"] {
+	margin-top: 10px;
+	padding: 14px;
+	border: none;
+	border-radius: 10px;
+	background: linear-gradient(135deg, #b91d1d, #d71e1e);
+	color: white;
+	font-size: 1rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 15px rgba(215, 30, 30, 0.3);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.cuadro button[type="cancel"]:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 20px rgba(215, 30, 30, 0.4);
+	background: linear-gradient(135deg, #d71e1e, #b91d1d);
+}
+
+.cuadro button[type="cancel"]:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 10px rgba(215, 30, 30, 0.3);
+}
+
 .cuadro span {
 	color: #e74c3c;
 	font-size: 0.85rem;

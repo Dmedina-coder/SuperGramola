@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.view.RedirectView;
 
 import daniel.uclm.esi.gramola.services.UserService;
 
@@ -55,17 +56,35 @@ public class UserController {
 
 	}
 
-	@DeleteMapping("/delete")
-	public void delete(@RequestBody Map<String, String> userData){
-			String email = userData.get("email");
-			String pwd = userData.get("pwd");
-
-			userService.delete(email, pwd);
+	@DeleteMapping("/delete/{email}")
+	public void delete(@PathVariable String email){
+		userService.delete(email);
 	}
 
 	@GetMapping("/activate/{email}")
-	public void activate(@PathVariable String email, @RequestParam String token){
+	public RedirectView activate(@PathVariable String email, @RequestParam String token){
 		userService.activate(email, token);
+		return new RedirectView("http://localhost:4200/");
+	}
+
+	@GetMapping("/{email}/is-active")
+	public boolean isUserActive(@PathVariable String email) {
+		try {
+			return userService.isUserActive(email);
+		} catch (Exception e) {
+			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
+	}
+
+	@GetMapping("/{email}/activation-url")
+	public String getActivationUrl(@PathVariable String email) {
+		try {
+			return userService.getActivationUrl(email);
+		} catch (Exception e) {
+			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
 	}
 
 	@GetMapping("/{email}/spotify/access")
@@ -106,13 +125,27 @@ public class UserController {
 		}
 	}
 
-	@GetMapping("/{email}/bar-data")
+	@PutMapping("/{email}/bar-data")
 	public Map<String, String> setBarData(@PathVariable String email, @RequestBody Map<String, String> barData) {
 		try {
 			String ubicacionBar = barData.get("ubicacionBar");
 			String nombreBar = barData.get("nombreBar");
 			userService.setBarData(email, ubicacionBar, nombreBar);
 			return Map.of("message", "Datos del bar actualizados correctamente");
+		} catch (Exception e) {
+			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
+	}
+
+	@GetMapping("/{email}/bar-data")
+	public Map<String, Object> getBarData(@PathVariable String email) {
+		try {
+			Map<String, Object> userData = userService.getUserData(email);
+			return Map.of(
+				"ubicacionBar", userData.get("ubicacionBar") != null ? userData.get("ubicacionBar") : "",
+				"nombreBar", userData.get("nombreBar") != null ? userData.get("nombreBar") : ""
+			);
 		} catch (Exception e) {
 			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);

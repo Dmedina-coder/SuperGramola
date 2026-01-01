@@ -1,26 +1,26 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <div class="container">
-	<form class="cuadro" (ngSubmit)="registrar()">
+	<form class="cuadro" (ngSubmit)="actualizarDatos()">
 		<div>
-			<a class="back-arrow" routerLink="/">
+			<a class="back-arrow" routerLink="/gramola">
 				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
 			</a>
-			<h2>Registro</h2>
+			<h2>Editar Perfil</h2>
 		</div>
 
 		<div>
 			<label for="email">Email:</label>
-			<input type="email" id="email" name="email" [(ngModel)]="email" placeholder="tu@email.com" required>
+			<input type="email" id="email" name="email" [(ngModel)]="email" placeholder="tu@email.com" [disabled]="true" required>
 		</div>
 
 		<div>
-			<label for="password">Contraseña:</label>
-			<input type="password" id="pwd1" name="pwd1" [(ngModel)]="pwd1" placeholder="Mínimo 8 caracteres" required>
+			<label for="password">Nueva Contraseña (opcional):</label>
+			<input type="password" id="pwd1" name="pwd1" [(ngModel)]="pwd1" placeholder="Mínimo 8 caracteres">
 		</div>
 
 		<div>
-			<label for="confirmPassword">Confirmar Contraseña:</label>
-			<input type="password" id="pwd2" name="pwd2" [(ngModel)]="pwd2" placeholder="Repite tu contraseña" required>
+			<label for="confirmPassword">Confirmar Nueva Contraseña:</label>
+			<input type="password" id="pwd2" name="pwd2" [(ngModel)]="pwd2" placeholder="Repite tu contraseña">
 		</div>
 
 		<div>
@@ -49,12 +49,11 @@
 
 		<div style="margin-top: 15px; padding: 12px; background-color: #e8f5e9; border-left: 4px solid #1DB954; border-radius: 8px;">
 			<p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a1a; font-size: 0.95rem;">
-				🎵 Conecta con Spotify
+				🎵 Credenciales de Spotify
 			</p>
 			<p style="margin: 0; font-size: 0.85rem; color: #666; line-height: 1.4;">
-				Crea una app en 
-				<a href="https://developer.spotify.com/dashboard" target="_blank">Spotify Developer Dashboard</a>
-				y agrega <code>http://127.0.0.1:4200/callback</code> como Redirect URI.
+				Actualiza tus credenciales desde tu 
+				<a href="https://developer.spotify.com/dashboard" target="_blank">Spotify Developer Dashboard</a>.
 			</p>
 		</div>
 
@@ -68,9 +67,13 @@
 			<input type="text" id="clientSecret" name="clientSecret" [(ngModel)]="clientSecret" placeholder="Tu Client Secret" required>
 		</div>
 
-		<button type="submit">Registrar y Conectar</button>
+		<button type="submit">Actualizar Datos</button>
 
-		<span id="valido" *ngIf="registroOK">Registro realizado correctamente</span>
+		<button type="cancel" (click)="eliminarCuenta()" style="background-color: #dc3545; margin-top: 10px;">
+			Eliminar Cuenta
+		</button>
+
+		<span id="valido" *ngIf="actualizacionOK">Datos actualizados correctamente</span>
 		<span *ngIf="pwdDiferentes">Las contraseñas no coinciden</span>
 		<span *ngIf="emailInvalido">El email introducido no es válido</span>
 		<span *ngIf="camposIncompletos">Debes completar todos los campos</span>

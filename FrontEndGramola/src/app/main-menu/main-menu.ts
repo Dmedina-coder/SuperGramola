@@ -34,7 +34,7 @@ export class MainMenu implements OnInit {
   }
 
   goToModifyUser() {
-    this.router.navigate(['/modify-user']);
+    this.router.navigate(['/editar-perfil']);
   }
 
   logout() {

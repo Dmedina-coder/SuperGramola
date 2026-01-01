@@ -89,14 +89,39 @@ import { SpotifyService } from '../spotify.service';
 				sessionStorage.setItem('clientSecret', this.clientSecret!);
 
 				console.log('Usuario y credenciales de Spotify registrados');
-				// Navegar a gramola, donde se iniciará el flujo OAuth
-				this.router.navigate(['/gramola']);
+
+				// Guardar datos del bar mediante la llamada específica
+				this.service.setBarData(this.email!, this.nombreBar!, this.ubicacionBar!).subscribe({
+					next: (response) => {
+						console.log('Datos del bar guardados', response);
+					},
+					error: (error) => {
+						console.error('Error guardando datos del bar:', error);
+					}
+				});
+
+				window.alert('Registro exitoso. Por favor, revise su correo para activar su cuenta.');
+
+				// Navegar a Main menu, donde se iniciará el flujo OAuth
+				this.router.navigate(['/']);
 			},
 			error: (error) => {
 				console.error('Error en el registro', error);
 				this.registroOK = false;
 			}
 		});
+	}
+
+	abrirGoogleMaps() {
+		// Abrir Google Maps en una nueva ventana
+		const searchQuery = this.nombreBar ? encodeURIComponent(this.nombreBar) : '';
+		const mapsUrl = `https://www.google.com/maps/search/${searchQuery}`;
+		window.open(mapsUrl, '_blank', 'width=800,height=600');
+		
+		// Mostrar instrucciones
+		setTimeout(() => {
+			alert('Busca tu ubicación en Google Maps, haz clic en el lugar correcto y copia la dirección completa que aparece.');
+		}, 500);
 	}
   }
   

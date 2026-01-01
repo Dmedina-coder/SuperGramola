@@ -91,4 +91,33 @@ export class UserService {
     const url = `${this.apiUrl}/users/${email}/coste-cancion`;
     return this.http.put<any>(url, { costeCancion });
   }
+
+  isActive(email: string) {
+    const url = `${this.apiUrl}/users/${email}/is-active`;
+    return this.http.get<boolean>(url);
+  }
+
+  deleteAccount(email: string) {
+    const url = `${this.apiUrl}/users/delete`;
+    return this.http.delete<any>(url, { body: { email: email } });
+  }
+
+  getBarData(email: string) {
+    const url = `${this.apiUrl}/users/${email}/bar-data`;
+    return this.http.get<{nombreBar?: string, ubicacionBar?: string}>(url);
+  }
+
+  setBarData(email: string, nombreBar: string, ubicacionBar: string) {
+    const url = `${this.apiUrl}/users/${email}/bar-data`;
+    const barData = {
+      nombreBar: nombreBar,
+      ubicacionBar: ubicacionBar
+    };
+    return this.http.put<any>(url, barData);
+  }
+
+  activateAccount(email: string, token: string) {
+    const url = `${this.apiUrl}/users/activate/${email}?token=${token}`;
+    return this.http.get<any>(url);
+  }
 }
