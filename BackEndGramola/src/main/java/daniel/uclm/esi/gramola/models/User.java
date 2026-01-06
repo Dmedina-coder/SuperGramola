@@ -33,6 +33,11 @@ public class User {
     private String ubicacionBar;
     private String nombreBar;
     private Double costeCancion;
+    private Double latitud;
+    private Double longitud;
+    
+    @jakarta.persistence.Column(columnDefinition = "LONGTEXT")
+    private String firma;
 
     private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -138,6 +143,30 @@ public class User {
 
     public void setCosteCancion(Double costeCancion) {
         this.costeCancion = costeCancion;
+    }
+
+    public Double getLatitud() {
+        return this.latitud;
+    }
+
+    public void setLatitud(Double latitud) {
+        this.latitud = latitud;
+    }
+
+    public Double getLongitud() {
+        return this.longitud;
+    }
+
+    public void setLongitud(Double longitud) {
+        this.longitud = longitud;
+    }
+
+    public String getFirma() {
+        return this.firma;
+    }
+
+    public void setFirma(String firma) {
+        this.firma = firma;
     }
 
     // Método para encriptar un token

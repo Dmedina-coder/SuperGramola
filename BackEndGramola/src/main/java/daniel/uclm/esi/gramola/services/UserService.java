@@ -23,6 +23,9 @@ public class UserService {
 	@Autowired
 	private EmailService emailService;
 
+	@Autowired
+	private GeocodingService geocodingService;
+
 	@Value("${app.base.url}")
 	private String baseUrl;
 
@@ -30,7 +33,7 @@ public class UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-	public void register(String email, String pwd, String accessToken, String privateToken, String subscriptionExpiry){
+	public void register(String email, String pwd, String accessToken, String privateToken, String subscriptionExpiry, String firma){
 
 		Optional<User> optUser = userDao.findById(email);
 
@@ -38,6 +41,9 @@ public class UserService {
 			User user = new User();
 			user.setEmail(email);
 			user.setPwd(passwordEncoder.encode(pwd));
+			if (firma != null && !firma.isBlank()) {
+				user.setFirma(firma);
+			}
 			try {
 				if (accessToken != null && !accessToken.isBlank()) {
 					user.setSpotifyAccessToken(accessToken);
@@ -204,6 +210,8 @@ public class UserService {
 			userData.put("ubicacionBar", user.getUbicacionBar());
 			userData.put("nombreBar", user.getNombreBar());
 			userData.put("costeCancion", user.getCosteCancion());
+			userData.put("latitud", user.getLatitud());
+			userData.put("longitud", user.getLongitud());
 			return userData;
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
@@ -216,6 +224,21 @@ public class UserService {
 			User user = optUser.get();
 			user.setUbicacionBar(ubicacionBar);
 			user.setNombreBar(nombreBar);
+			
+			// Obtener coordenadas de la ubicación
+			try {
+				double[] coordenadas = geocodingService.obtenerCoordenadas(ubicacionBar);
+				user.setLatitud(coordenadas[0]);
+				user.setLongitud(coordenadas[1]);
+				logger.info("Coordenadas actualizadas para el bar '{}': lat={}, lon={}", 
+					nombreBar, coordenadas[0], coordenadas[1]);
+			} catch (Exception e) {
+				logger.error("Error al obtener coordenadas para '{}': {}", ubicacionBar, e.getMessage());
+				// No lanzamos excepción para permitir guardar los datos del bar sin coordenadas
+				// Opcionalmente podrías descomentar la siguiente línea si quieres que falle:
+				// throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se pudieron obtener las coordenadas: " + e.getMessage());
+			}
+			
 			userDao.save(user);
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
@@ -241,6 +264,93 @@ public class UserService {
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
 		}
+	}
+
+	public void updatePassword(String email, String oldPassword, String newPassword) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			
+			// Verificar que la contraseña antigua es correcta
+			boolean matches = passwordEncoder.matches(oldPassword, user.getPwd());
+			if (!matches) {
+				throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La contraseña actual es incorrecta");
+			}
+			
+			// Actualizar a la nueva contraseña
+			user.setPwd(passwordEncoder.encode(newPassword));
+			userDao.save(user);
+			logger.info("Contraseña actualizada para usuario: {}", email);
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
+	/**
+	 * Verifica si unas coordenadas están dentro del radio de 100 metros de las coordenadas del bar del usuario.
+	 * Usa la fórmula de Haversine para calcular la distancia entre dos puntos geográficos.
+	 * 
+	 * @param email Email del usuario
+	 * @param latitud Latitud de la ubicación a verificar
+	 * @param longitud Longitud de la ubicación a verificar
+	 * @return true si está dentro del radio de 100 metros, false en caso contrario
+	 */
+	public boolean checkProximity(String email, Double latitud, Double longitud) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			
+			// Verificar que el usuario tiene coordenadas guardadas
+			if (user.getLatitud() == null || user.getLongitud() == null) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no tiene coordenadas de bar registradas");
+			}
+			
+			// Calcular distancia usando fórmula de Haversine
+			double distancia = calcularDistanciaHaversine(
+				user.getLatitud(), 
+				user.getLongitud(), 
+				latitud, 
+				longitud
+			);
+			
+			logger.info("Distancia calculada para usuario {}: {} metros", email, distancia);
+			
+			// Verificar si está dentro del radio de 100 metros
+			return distancia <= 100.0;
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+		}
+	}
+
+	/**
+	 * Calcula la distancia entre dos puntos geográficos usando la fórmula de Haversine.
+	 * 
+	 * @param lat1 Latitud del primer punto
+	 * @param lon1 Longitud del primer punto
+	 * @param lat2 Latitud del segundo punto
+	 * @param lon2 Longitud del segundo punto
+	 * @return Distancia en metros
+	 */
+	private double calcularDistanciaHaversine(double lat1, double lon1, double lat2, double lon2) {
+		final int RADIO_TIERRA = 6371000; // Radio de la Tierra en metros
+		
+		// Convertir grados a radianes
+		double lat1Rad = Math.toRadians(lat1);
+		double lat2Rad = Math.toRadians(lat2);
+		double deltaLatRad = Math.toRadians(lat2 - lat1);
+		double deltaLonRad = Math.toRadians(lon2 - lon1);
+		
+		// Aplicar fórmula de Haversine
+		double a = Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
+				   Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+				   Math.sin(deltaLonRad / 2) * Math.sin(deltaLonRad / 2);
+		
+		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+		
+		// Calcular distancia
+		double distancia = RADIO_TIERRA * c;
+		
+		return distancia;
 	}
 
 	/**
@@ -288,5 +398,15 @@ public class UserService {
 			</body>
 			</html>
 			""".formatted(email, activationUrl, activationUrl);
+	}
+
+	public String getFirma(String email) {
+		Optional<User> optUser = userDao.findById(email);
+		if (optUser.isPresent()) {
+			User user = optUser.get();
+			return user.getFirma();
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+		}
 	}
 }

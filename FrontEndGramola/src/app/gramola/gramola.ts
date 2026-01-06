@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SessionStorageService } from '../sessionstorage.service';
 import { SpotifyService } from '../spotify.service';
@@ -42,6 +42,12 @@ export class Gramola implements OnInit, OnDestroy {
   savedPin: string = '';
   pinError: string = '';
 
+  // Verificación de proximidad
+  checkingProximity: boolean = true;
+  isNearBar: boolean = false;
+  proximityError: string = '';
+  locationError: string = '';
+
   // Sistema de pago por canción
   showPaymentModal: boolean = false;
   selectedTrackToPay: any = null;
@@ -58,21 +64,31 @@ export class Gramola implements OnInit, OnDestroy {
     private sessionStorageService: SessionStorageService,
     private spotifyService: SpotifyService,
     private userService: UserService,
-    private paymentService: PaymentService
+    private paymentService: PaymentService,
+    private router: Router
   ) {}
 
   ngOnInit() {
+    // Verificar proximidad primero
+    this.checkUserProximity();
+
     // Obtener email del usuario y coste por canción
     const userEmail = this.sessionStorageService.getEmail();
     if (userEmail) {
       this.userService.getCosteCancion(userEmail).subscribe({
         next: (coste) => {
           this.costeCancion = Math.round(coste) / 100;
+          // Stripe requiere un mínimo de 0.50 EUR
+          if (this.costeCancion < 0.50) {
+            console.warn(`Coste ${this.costeCancion} es menor al mínimo de Stripe. Ajustando a 0.50€`);
+            this.costeCancion = 0.50;
+          }
           console.log('Coste por canción:', this.costeCancion);
         },
         error: (error) => {
           console.error('Error al obtener coste por canción:', error);
-          this.costeCancion = 0;
+          // Establecer mínimo por defecto si hay error
+          this.costeCancion = 0.50;
         }
       });
     }
@@ -544,6 +560,94 @@ export class Gramola implements OnInit, OnDestroy {
     this.pinInput = '';
     this.pinError = '';
   }
+
+  checkUserProximity() {
+    const userEmail = this.sessionStorageService.getEmail();
+    
+    if (!userEmail) {
+      this.proximityError = 'No se pudo obtener el email del usuario';
+      this.checkingProximity = false;
+      return;
+    }
+
+    // Verificar si el navegador soporta geolocalización
+    if (!navigator.geolocation) {
+      this.locationError = 'Tu navegador no soporta geolocalización';
+      this.checkingProximity = false;
+      alert('Tu navegador no soporta geolocalización. Por favor, actualiza tu navegador.');
+      return;
+    }
+
+    // Obtener ubicación actual del usuario
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitud = position.coords.latitude;
+        const longitud = position.coords.longitude;
+        
+        console.log('Ubicación actual:', { latitud, longitud });
+
+        // Verificar proximidad con el backend
+        this.userService.checkProximity(userEmail, latitud, longitud).subscribe({
+          next: (response) => {
+            this.isNearBar = response.estaCerca;
+            this.checkingProximity = false;
+            
+            if (!this.isNearBar) {
+              this.proximityError = response.mensaje || 'Estás demasiado lejos del bar';
+            } else {
+              console.log('✓ Usuario está dentro del rango permitido');
+            }
+          },
+          error: (error) => {
+            console.error('Error al verificar proximidad:', error);
+            this.checkingProximity = false;
+            
+            if (error.status === 404 && error.error?.message?.includes('coordenadas')) {
+              this.proximityError = 'El bar no tiene coordenadas registradas';
+            } else {
+              this.proximityError = 'Error al verificar la ubicación';
+            }
+          }
+        });
+      },
+      (error) => {
+        this.checkingProximity = false;
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            this.locationError = 'Permiso de ubicación denegado';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            this.locationError = 'Ubicación no disponible';
+            break;
+          case error.TIMEOUT:
+            this.locationError = 'Tiempo de espera agotado';
+            break;
+          default:
+            this.locationError = 'Error desconocido al obtener ubicación';
+            break;
+        }
+        
+        console.error('Error de geolocalización:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }
+
+  // Bypass para presentaciones
+  bypassProximityCheck() {
+    console.log('⚠️ MODO PRESENTACIÓN: Omitiendo verificación de proximidad');
+    this.isNearBar = true;
+    this.proximityError = '';
+    this.locationError = '';
+    this.checkingProximity = false;
+  }
+
+  // Sistema de bloqueo con PIN
 
   closePinModal() {
     this.showPinModal = false;

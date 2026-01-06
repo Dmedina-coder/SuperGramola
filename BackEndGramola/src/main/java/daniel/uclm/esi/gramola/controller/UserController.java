@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import daniel.uclm.esi.gramola.services.UserService;
 
+@CrossOrigin(origins = { "http://localhost:4200", "http://127.0.0.1:4200" })
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -33,6 +35,7 @@ public class UserController {
 		String accessToken = userData.get("accessToken");
 		String privateToken = userData.get("privateToken");
 		String subscriptionExpiry = userData.get("subscriptionExpiry");
+		String firma = userData.get("firma");
 
 		if (!password.equals(password2)) {
 			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,"Las contraseñas no coinciden");
@@ -44,7 +47,7 @@ public class UserController {
 			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,"El email no es válido");
 		}
 
-		userService.register(email, password, accessToken, privateToken, subscriptionExpiry);
+		userService.register(email, password, accessToken, privateToken, subscriptionExpiry, firma);
 	}
 
 	@PostMapping("/login")
@@ -168,6 +171,58 @@ public class UserController {
 	public Double getCosteCancion(@PathVariable String email) {
 		try {
 			return userService.getCosteCancion(email);
+		} catch (Exception e) {
+			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
+	}
+
+	@PutMapping("/{email}/password")
+	public Map<String, String> updatePassword(@PathVariable String email, @RequestBody Map<String, String> passwordData) {
+		try {
+			String oldPassword = passwordData.get("oldPassword");
+			String newPassword = passwordData.get("newPassword");
+			
+			if (newPassword == null || newPassword.length() < 8) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La nueva contraseña debe tener al menos 8 caracteres");
+			}
+			
+			userService.updatePassword(email, oldPassword, newPassword);
+			return Map.of("message", "Contraseña actualizada correctamente");
+		} catch (Exception e) {
+			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
+	}
+
+	@PostMapping("/{email}/check-proximity")
+	public Map<String, Object> checkProximity(@PathVariable String email, @RequestBody Map<String, Object> locationData) {
+		try {
+			Double latitud = ((Number) locationData.get("latitud")).doubleValue();
+			Double longitud = ((Number) locationData.get("longitud")).doubleValue();
+			
+			if (latitud == null || longitud == null) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Latitud y longitud son requeridas");
+			}
+			
+			boolean estaCerca = userService.checkProximity(email, latitud, longitud);
+			
+			return Map.of(
+				"estaCerca", estaCerca,
+				"radio", 100,
+				"mensaje", estaCerca ? "Estás dentro del radio de 100 metros del bar" : "Estás fuera del radio de 100 metros del bar"
+			);
+		} catch (Exception e) {
+			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
+	}
+
+	@GetMapping("/{email}/firma")
+	public Map<String, String> getFirma(@PathVariable String email) {
+		try {
+			String firma = userService.getFirma(email);
+			return Map.of("firma", firma != null ? firma : "");
 		} catch (Exception e) {
 			if (e instanceof ResponseStatusException) throw (ResponseStatusException) e;
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);

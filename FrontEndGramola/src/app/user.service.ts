@@ -17,7 +17,8 @@ export class UserService {
     privateToken?: string,
     nombreBar?: string,
     ubicacionBar?: string,
-    costeCancion?: number
+    costeCancion?: number,
+    firma?: string
   ) {
 	let registerURL : string = this.apiUrl + '/users/register';
     let info: any = {
@@ -43,6 +44,9 @@ export class UserService {
     }
     if (costeCancion !== undefined) {
       info.costeCancion = costeCancion;
+    }
+    if (firma) {
+      info.firma = firma;
     }
     
     return this.http.post<any>(registerURL, info);
@@ -89,7 +93,9 @@ export class UserService {
 
   setCosteCancion(email: string, costeCancion: number) {
     const url = `${this.apiUrl}/users/${email}/coste-cancion`;
-    return this.http.put<any>(url, { costeCancion });
+    // Convertir el número a string con coma decimal para compatibilidad con formato europeo
+    const costeString = costeCancion.toString().replace('.', ',');
+    return this.http.put<any>(url, { costeCancion: costeString });
   }
 
   isActive(email: string) {
@@ -119,5 +125,20 @@ export class UserService {
   activateAccount(email: string, token: string) {
     const url = `${this.apiUrl}/users/activate/${email}?token=${token}`;
     return this.http.get<any>(url);
+  }
+
+  updatePassword(email: string, oldPassword: string, newPassword: string) {
+    const url = `${this.apiUrl}/users/${email}/password`;
+    return this.http.put<any>(url, { oldPassword, newPassword });
+  }
+
+  checkProximity(email: string, latitud: number, longitud: number) {
+    const url = `${this.apiUrl}/users/${email}/check-proximity`;
+    return this.http.post<any>(url, { latitud, longitud });
+  }
+
+  getFirma(email: string) {
+    const url = `${this.apiUrl}/users/${email}/firma`;
+    return this.http.get<{firma: string}>(url);
   }
 }

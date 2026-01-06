@@ -2,7 +2,7 @@
 <div class="container">
 	<form class="cuadro" (ngSubmit)="actualizarDatos()">
 		<div>
-			<a class="back-arrow" routerLink="/gramola">
+			<a class="back-arrow" routerLink="/">
 				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
 			</a>
 			<h2>Editar Perfil</h2>
@@ -13,14 +13,28 @@
 			<input type="email" id="email" name="email" [(ngModel)]="email" placeholder="tu@email.com" [disabled]="true" required>
 		</div>
 
+		<div style="margin-top: 15px; padding: 12px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 8px;">
+			<p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a1a; font-size: 0.95rem;">
+				🔒 Cambiar Contraseña
+			</p>
+			<p style="margin: 0; font-size: 0.85rem; color: #666; line-height: 1.4;">
+				Deja estos campos vacíos si no deseas cambiar tu contraseña.
+			</p>
+		</div>
+
 		<div>
-			<label for="password">Nueva Contraseña (opcional):</label>
+			<label for="pwdActual">Contraseña Actual:</label>
+			<input type="password" id="pwdActual" name="pwdActual" [(ngModel)]="pwdActual" placeholder="Tu contraseña actual">
+		</div>
+
+		<div>
+			<label for="password">Nueva Contraseña:</label>
 			<input type="password" id="pwd1" name="pwd1" [(ngModel)]="pwd1" placeholder="Mínimo 8 caracteres">
 		</div>
 
 		<div>
 			<label for="confirmPassword">Confirmar Nueva Contraseña:</label>
-			<input type="password" id="pwd2" name="pwd2" [(ngModel)]="pwd2" placeholder="Repite tu contraseña">
+			<input type="password" id="pwd2" name="pwd2" [(ngModel)]="pwd2" placeholder="Repite tu nueva contraseña">
 		</div>
 
 		<div>
@@ -32,13 +46,13 @@
 			<label for="ubicacionBar">Ubicación del Bar:</label>
 			<div style="display: flex; gap: 8px; align-items: center;">
 				<input type="text" id="ubicacionBar" name="ubicacionBar" [(ngModel)]="ubicacionBar" placeholder="Ciudad, dirección o ubicación" required style="flex: 1;">
-				<button type="button" (click)="abrirGoogleMaps()" style="padding: 8px 12px; background-color: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px;" title="Buscar en Google Maps">
+				<button type="button" (click)="abrirOpenStreetMap()" style="padding: 8px 12px; background-color: #7ebc6f; color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px;" title="Buscar en OpenStreetMap">
 					<span class="material-icons" style="font-size: 1rem;">place</span>
 					Mapa
 				</button>
 			</div>
 			<p style="margin: 5px 0 0 0; font-size: 0.75rem; color: #666;">
-				Busca tu ubicación en el mapa y copia la dirección completa
+				Busca tu ubicación en OpenStreetMap y copia la dirección completa
 			</p>
 		</div>
 
@@ -77,5 +91,7 @@
 		<span *ngIf="pwdDiferentes">Las contraseñas no coinciden</span>
 		<span *ngIf="emailInvalido">El email introducido no es válido</span>
 		<span *ngIf="camposIncompletos">Debes completar todos los campos</span>
+		<span *ngIf="pwdActualIncorrecta">La contraseña actual es incorrecta</span>
+		<span *ngIf="pwdDemasiadoCorta">La nueva contraseña debe tener al menos 8 caracteres</span>
 	</form>
 </div>

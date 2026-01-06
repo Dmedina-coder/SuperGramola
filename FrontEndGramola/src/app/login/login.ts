@@ -17,6 +17,11 @@ export class LoginForm implements OnInit {
 	loginForm : FormGroup;
 	email? : string
 	pwd? : string
+	
+	// Modal de firma
+	showSignatureModal: boolean = false;
+	userSignature: string = '';
+	userEmail: string = '';
 
 	constructor(
 		private formBuilder : FormBuilder,
@@ -88,9 +93,10 @@ export class LoginForm implements OnInit {
 						clientId: this.userService.getSpotifyAccessToken(email),
 						clientSecret: this.userService.getSpotifyPrivateToken(email),
 						hasSubscription: this.userService.hasActiveSubscription(email),
-						isActive: this.userService.isActive(email)
-					}).subscribe({
-						next: ({ clientId, clientSecret, hasSubscription, isActive }) => {
+					isActive: this.userService.isActive(email),
+					firma: this.userService.getFirma(email)
+				}).subscribe({
+					next: ({ clientId, clientSecret, hasSubscription, isActive, firma }) => {
 							const hasClientId = !!clientId && clientId.trim().length > 0;
 							const hasClientSecret = !!clientSecret && clientSecret.trim().length > 0;
 														
@@ -103,6 +109,20 @@ export class LoginForm implements OnInit {
 							if (!isActive) {
 								alert('Tu cuenta no está activa. Por favor, verifica tu email para activarla.');
 								this.sessionStorageService.removeEmail();
+								return;
+							}
+							
+							// Mostrar firma si existe
+							if (firma && firma.firma && firma.firma.trim().length > 0) {
+								this.userSignature = firma.firma;
+								this.userEmail = email;
+								this.showSignatureModal = true;
+								
+								// Guardar credenciales si existen
+								if (hasClientId && hasClientSecret) {
+									this.sessionStorageService.setSpotifyCredentials(clientId, clientSecret);
+								}
+								this.sessionStorageService.setPremiumStatus(hasSubscription);
 								return;
 							}
 							
@@ -146,5 +166,43 @@ export class LoginForm implements OnInit {
 				}
 			});
 		}
+	}
+
+	closeSignatureModal() {
+		this.showSignatureModal = false;
+		this.userSignature = '';
+		
+		// Navegar después de cerrar la firma
+		forkJoin({
+			clientId: this.userService.getSpotifyAccessToken(this.userEmail),
+			clientSecret: this.userService.getSpotifyPrivateToken(this.userEmail),
+			hasSubscription: this.userService.hasActiveSubscription(this.userEmail)
+		}).subscribe({
+			next: ({ clientId, clientSecret, hasSubscription }) => {
+				const hasClientId = !!clientId && clientId.trim().length > 0;
+				const hasClientSecret = !!clientSecret && clientSecret.trim().length > 0;
+				
+				if (hasClientId && hasClientSecret) {
+					this.sessionStorageService.setSpotifyCredentials(clientId, clientSecret);
+				}
+				
+				this.sessionStorageService.setPremiumStatus(hasSubscription);
+				
+				if (hasSubscription) {
+					if (hasClientId && hasClientSecret) {
+						this.router.navigate(['/gramola']);
+					} else {
+						alert('Por favor, registra tus claves de Spotify para usar la gramola.');
+						this.router.navigate(['/registro']);
+					}
+				} else {
+					this.router.navigate(['/payments']);
+				}
+			},
+			error: (err) => {
+				console.error('Error navegando después de firma:', err);
+				this.router.navigate(['/main-menu']);
+			}
+		});
 	}
 }

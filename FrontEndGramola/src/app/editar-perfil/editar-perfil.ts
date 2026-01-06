@@ -18,6 +18,7 @@ import { SpotifyService } from '../spotify.service';
 export class EditarPerfil implements OnInit {
   
 	email: string | null = null
+	pwdActual?: string
 	pwd1?: string
 	pwd2?: string
 	clientId?: string
@@ -30,6 +31,8 @@ export class EditarPerfil implements OnInit {
 	pwdDiferentes: boolean = false
 	emailInvalido: boolean = false
 	camposIncompletos: boolean = false
+	pwdActualIncorrecta: boolean = false
+	pwdDemasiadoCorta: boolean = false
   
 	constructor(
 		private service: UserService,
@@ -97,10 +100,25 @@ export class EditarPerfil implements OnInit {
 		}
 
 		// Validar contraseñas (solo si se quiere cambiar)
-		if (this.pwd1 || this.pwd2) {
+		if (this.pwd1 || this.pwd2 || this.pwdActual) {
+			// Si se proporciona algún campo de contraseña, todos son obligatorios
+			if (!this.pwdActual || !this.pwd1 || !this.pwd2) {
+				console.error('Para cambiar la contraseña debes completar todos los campos');
+				this.camposIncompletos = true;
+				window.alert('Para cambiar la contraseña debes proporcionar: contraseña actual, nueva contraseña y confirmar nueva contraseña');
+				return;
+			}
+			
 			if (this.pwd1 !== this.pwd2) {
 				console.error('Las contraseñas no coinciden');
 				this.pwdDiferentes = true;
+				window.alert('Las nuevas contraseñas no coinciden');
+				return;
+			}
+
+			if (this.pwd1.length < 8) {
+				this.pwdDemasiadoCorta = true;
+				window.alert('La nueva contraseña debe tener al menos 8 caracteres');
 				return;
 			}
 		}
@@ -116,8 +134,16 @@ export class EditarPerfil implements OnInit {
 		if (!this.nombreBar || !this.ubicacionBar || this.costeCancion === undefined) {
 			console.error('Debes completar todos los campos del bar');
 			this.camposIncompletos = true;
+			window.alert('Debes completar los campos: Nombre del Bar, Ubicación y Coste por Canción');
 			return;
 		}
+
+		// Resetear flags de error
+		this.pwdDiferentes = false;
+		this.emailInvalido = false;
+		this.camposIncompletos = false;
+		this.pwdActualIncorrecta = false;
+		this.pwdDemasiadoCorta = false;
 
 		// Actualizar credenciales de Spotify
 		if (this.clientId && this.clientSecret) {
@@ -146,11 +172,52 @@ export class EditarPerfil implements OnInit {
 			});
 		}
 
-		// TODO: Agregar lógica para actualizar nombreBar, ubicacionBar y contraseña si es necesario
+		// Actualizar datos del bar (nombre y ubicación)
+		if (this.nombreBar && this.ubicacionBar) {
+			this.service.setBarData(this.email!, this.nombreBar, this.ubicacionBar).subscribe({
+				next: (response) => {
+					console.log('Datos del bar actualizados', response);
+				},
+				error: (error) => {
+					console.error('Error actualizando datos del bar:', error);
+					window.alert('Error al actualizar datos del bar: ' + (error.error?.message || error.message));
+				}
+			});
+		}
+
+		// Actualizar contraseña si se proporcionó
+		if (this.pwd1 && this.pwd2 && this.pwdActual) {
+			if (this.pwd1.length < 8) {
+				this.pwdDemasiadoCorta = true;
+				window.alert('La nueva contraseña debe tener al menos 8 caracteres');
+				return;
+			}
+			
+			this.service.updatePassword(this.email!, this.pwdActual, this.pwd1).subscribe({
+				next: (response) => {
+					console.log('Contraseña actualizada', response);
+					// Limpiar campos de contraseña
+					this.pwdActual = '';
+					this.pwd1 = '';
+					this.pwd2 = '';
+				},
+				error: (error) => {
+					console.error('Error actualizando contraseña:', error);
+					if (error.status === 401) {
+						this.pwdActualIncorrecta = true;
+						window.alert('La contraseña actual es incorrecta');
+					} else {
+						window.alert('Error al actualizar contraseña: ' + (error.error?.message || error.message));
+					}
+				}
+			});
+		}
 
 		this.pwdDiferentes = false;
 		this.emailInvalido = false;
 		this.camposIncompletos = false;
+		this.pwdActualIncorrecta = false;
+		this.pwdDemasiadoCorta = false;
 		this.actualizacionOK = true;
 
 		window.alert('Datos actualizados correctamente.');
@@ -189,15 +256,22 @@ export class EditarPerfil implements OnInit {
 		});
 	}
 
-	abrirGoogleMaps() {
-		// Abrir Google Maps en una nueva ventana
-		const searchQuery = this.nombreBar ? encodeURIComponent(this.nombreBar) : '';
-		const mapsUrl = `https://www.google.com/maps/search/${searchQuery}`;
-		window.open(mapsUrl, '_blank', 'width=800,height=600');
+	abrirOpenStreetMap() {
+		// Abrir OpenStreetMap en una nueva ventana
+		const searchQuery = this.nombreBar ? encodeURIComponent(this.nombreBar + ', España') : 'España';
+		const mapsUrl = `https://www.openstreetmap.org/search?query=${searchQuery}`;
+		window.open(mapsUrl, '_blank', 'width=1000,height=700');
 		
 		// Mostrar instrucciones
 		setTimeout(() => {
-			alert('Busca tu ubicación en Google Maps, haz clic en el lugar correcto y copia la dirección completa que aparece.');
+			alert('INSTRUCCIONES:\n\n' +
+				'1. Busca tu ubicación en OpenStreetMap\n' +
+				'2. Haz clic en el resultado correcto de la lista\n' +
+				'3. En el panel que se abre, verás la dirección completa\n' +
+				'4. Selecciona la dirección (arrastra el ratón sobre ella)\n' +
+				'5. Copia con Ctrl+C\n' +
+				'6. Pégala aquí con Ctrl+V\n\n' +
+				'Formato recomendado: "Calle Nombre, Número, Código Postal Localidad, Provincia"');
 		}, 500);
 	}
 }

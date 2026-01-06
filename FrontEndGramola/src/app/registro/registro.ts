@@ -30,6 +30,14 @@ import { SpotifyService } from '../spotify.service';
 	pwdDiferentes: boolean = false
 	emailInvalido: boolean = false
 	camposIncompletos: boolean = false
+	
+	// Modal de firma
+	showSignatureModal: boolean = false
+	signatureCanvas: any = null
+	signatureContext: any = null
+	isDrawing: boolean = false
+	signatureData: string = ''
+	hasSigned: boolean = false
   
 	constructor(
 		private service: UserService,
@@ -66,6 +74,13 @@ import { SpotifyService } from '../spotify.service';
 			this.camposIncompletos = true;
 			return;
 		}
+
+		// Validar firma
+		if (!this.hasSigned || !this.signatureData) {
+			console.error('Debes firmar para completar el registro');
+			alert('Por favor, firma en el campo de firma antes de registrarte.');
+			return;
+		}
   
 		this.service.register(
 			this.email!, 
@@ -75,7 +90,8 @@ import { SpotifyService } from '../spotify.service';
 			this.clientSecret!,
 			this.nombreBar!,
 			this.ubicacionBar!,
-			this.costeCancion!
+			this.costeCancion!,
+			this.signatureData
 		).subscribe({
 			next: (ok) => {
 				console.log('Registro exitoso', ok);
@@ -105,16 +121,114 @@ import { SpotifyService } from '../spotify.service';
 		});
 	}
 
-	abrirGoogleMaps() {
-		// Abrir Google Maps en una nueva ventana
-		const searchQuery = this.nombreBar ? encodeURIComponent(this.nombreBar) : '';
-		const mapsUrl = `https://www.google.com/maps/search/${searchQuery}`;
-		window.open(mapsUrl, '_blank', 'width=800,height=600');
+	abrirOpenStreetMap() {
+		// Abrir OpenStreetMap en una nueva ventana
+		const searchQuery = this.nombreBar ? encodeURIComponent(this.nombreBar + ', España') : 'España';
+		const mapsUrl = `https://www.openstreetmap.org/search?query=${searchQuery}`;
+		window.open(mapsUrl, '_blank', 'width=1000,height=700');
 		
 		// Mostrar instrucciones
 		setTimeout(() => {
-			alert('Busca tu ubicación en Google Maps, haz clic en el lugar correcto y copia la dirección completa que aparece.');
+			alert('INSTRUCCIONES:\n\n' +
+				'1. Busca tu ubicación en OpenStreetMap\n' +
+				'2. Haz clic en el resultado correcto de la lista\n' +
+				'3. En el panel que se abre, verás la dirección completa\n' +
+				'4. Selecciona la dirección (arrastra el ratón sobre ella)\n' +
+				'5. Copia con Ctrl+C\n' +
+				'6. Pégala aquí con Ctrl+V\n\n' +
+				'Formato recomendado: "Calle Nombre, Número, Código Postal Localidad, Provincia"');
 		}, 500);
+	}
+
+	// Modal de firma
+	openSignatureModal() {
+		this.showSignatureModal = true;
+		setTimeout(() => this.initializeCanvas(), 100);
+	}
+
+	closeSignatureModal() {
+		this.showSignatureModal = false;
+	}
+
+	initializeCanvas() {
+		this.signatureCanvas = document.getElementById('signatureCanvas') as HTMLCanvasElement;
+		if (!this.signatureCanvas) return;
+
+		this.signatureContext = this.signatureCanvas.getContext('2d');
+		this.signatureContext.strokeStyle = '#000000';
+		this.signatureContext.lineWidth = 2;
+		this.signatureContext.lineCap = 'round';
+
+		// Eventos de ratón
+		this.signatureCanvas.addEventListener('mousedown', (e: MouseEvent) => this.startDrawing(e));
+		this.signatureCanvas.addEventListener('mousemove', (e: MouseEvent) => this.draw(e));
+		this.signatureCanvas.addEventListener('mouseup', () => this.stopDrawing());
+		this.signatureCanvas.addEventListener('mouseout', () => this.stopDrawing());
+
+		// Eventos táctiles
+		this.signatureCanvas.addEventListener('touchstart', (e: TouchEvent) => {
+			e.preventDefault();
+			this.startDrawing(e);
+		});
+		this.signatureCanvas.addEventListener('touchmove', (e: TouchEvent) => {
+			e.preventDefault();
+			this.draw(e);
+		});
+		this.signatureCanvas.addEventListener('touchend', () => this.stopDrawing());
+	}
+
+	getCoordinates(event: MouseEvent | TouchEvent): { x: number, y: number } {
+		const rect = this.signatureCanvas.getBoundingClientRect();
+		if (event instanceof MouseEvent) {
+			return {
+				x: event.clientX - rect.left,
+				y: event.clientY - rect.top
+			};
+		} else {
+			const touch = event.touches[0];
+			return {
+				x: touch.clientX - rect.left,
+				y: touch.clientY - rect.top
+			};
+		}
+	}
+
+	startDrawing(event: MouseEvent | TouchEvent) {
+		this.isDrawing = true;
+		const coords = this.getCoordinates(event);
+		this.signatureContext.beginPath();
+		this.signatureContext.moveTo(coords.x, coords.y);
+	}
+
+	draw(event: MouseEvent | TouchEvent) {
+		if (!this.isDrawing) return;
+		const coords = this.getCoordinates(event);
+		this.signatureContext.lineTo(coords.x, coords.y);
+		this.signatureContext.stroke();
+	}
+
+	stopDrawing() {
+		if (this.isDrawing) {
+			this.isDrawing = false;
+			this.signatureContext.closePath();
+		}
+	}
+
+	clearSignature() {
+		if (!this.signatureCanvas || !this.signatureContext) return;
+		this.signatureContext.clearRect(0, 0, this.signatureCanvas.width, this.signatureCanvas.height);
+		this.signatureData = '';
+		this.hasSigned = false;
+	}
+
+	saveSignature() {
+		if (!this.signatureCanvas) return;
+		
+		// Convertir el canvas a imagen base64
+		this.signatureData = this.signatureCanvas.toDataURL('image/png');
+		this.hasSigned = true;
+		this.closeSignatureModal();
+		console.log('Firma guardada correctamente');
 	}
   }
   

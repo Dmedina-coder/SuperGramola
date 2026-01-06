@@ -668,3 +668,13 @@
   height: auto !important;
   min-height: 44px !important;
 }
+
+/* Animación para el icono de ubicación */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,6 +1,42 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <div class="container">
-	<div class="cuadro">
+	<!-- Mensaje de verificación de proximidad -->
+	<div class="proximity-check" *ngIf="checkingProximity">
+		<div class="cuadro" style="text-align: center; padding: 40px;">
+			<h2>Verificando ubicación...</h2>
+			<p>Comprobando que estás cerca del bar</p>
+		</div>
+	</div>
+
+	<!-- Mensaje de error de proximidad -->
+	<div class="proximity-error" *ngIf="!checkingProximity && !isNearBar && (proximityError || locationError)">
+		<div class="cuadro" style="text-align: center; padding: 40px;">
+			<h2 style="color: #d32f2f;">⚠️ Acceso restringido</h2>
+			<p style="margin: 20px 0; font-size: 1.1rem;">
+				{{ proximityError || locationError }}
+			</p>
+			<p style="color: #666;">
+				Debes estar dentro del radio de 100 metros del bar para usar la Gramola.
+			</p>
+			<button 
+				style="margin-top: 20px; padding: 12px 24px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;"
+				(click)="checkUserProximity()">
+				🔄 Verificar nuevamente
+			</button>
+			<button 
+				style="margin: 20px 10px 0; padding: 12px 24px; background-color: #FF9800; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;"
+				(click)="bypassProximityCheck()">
+				🎯 Modo Presentación
+			</button>
+			<br>
+			<a routerLink="/" style="display: inline-block; margin-top: 15px; color: #666; text-decoration: none;">
+				← Volver al inicio
+			</a>
+		</div>
+	</div>
+
+	<!-- Contenido principal de la gramola (solo si está cerca) -->
+	<div class="cuadro" *ngIf="!checkingProximity && isNearBar">
 		<div class="header-container">
 			<a class="back-arrow" routerLink="/" *ngIf="!isLocked">
 				<span class="material-icons" style="color: black; font-size: 1.2rem;">arrow_back</span>		
@@ -207,5 +243,5 @@
 				</div>
 			</div>
 		</div>
-	</div>
-</div>
+	</div><!-- /.cuadro (contenido principal) -->
+</div><!-- /.container -->

@@ -32,19 +32,30 @@
 			<label for="ubicacionBar">Ubicación del Bar:</label>
 			<div style="display: flex; gap: 8px; align-items: center;">
 				<input type="text" id="ubicacionBar" name="ubicacionBar" [(ngModel)]="ubicacionBar" placeholder="Ciudad, dirección o ubicación" required style="flex: 1;">
-				<button type="button" (click)="abrirGoogleMaps()" style="padding: 8px 12px; background-color: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px;" title="Buscar en Google Maps">
+				<button type="button" (click)="abrirOpenStreetMap()" style="padding: 8px 12px; background-color: #7ebc6f; color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px;" title="Buscar en OpenStreetMap">
 					<span class="material-icons" style="font-size: 1rem;">place</span>
 					Mapa
 				</button>
 			</div>
 			<p style="margin: 5px 0 0 0; font-size: 0.75rem; color: #666;">
-				Busca tu ubicación en el mapa y copia la dirección completa
+				Busca tu ubicación en OpenStreetMap y copia la dirección completa
 			</p>
 		</div>
 
 		<div>
 			<label for="costeCancion">Coste por Canción (€):</label>
 			<input type="number" id="costeCancion" name="costeCancion" [(ngModel)]="costeCancion" placeholder="0.50" step="0.01" min="0" required>
+		</div>
+
+		<div>
+			<label>Firma del Responsable:</label>
+			<button type="button" (click)="openSignatureModal()" style="padding: 10px 20px; background-color: #3f51b5; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+				<span class="material-icons">edit</span>
+				{{ hasSigned ? 'Modificar Firma' : 'Firmar Aquí' }}
+			</button>
+			<div *ngIf="hasSigned" style="margin-top: 8px; padding: 8px; background-color: #e8f5e9; border-radius: 4px; text-align: center; color: #2e7d32; font-size: 0.85rem;">
+				✓ Firma registrada correctamente
+			</div>
 		</div>
 
 		<div style="margin-top: 15px; padding: 12px; background-color: #e8f5e9; border-left: 4px solid #1DB954; border-radius: 8px;">
@@ -75,4 +86,26 @@
 		<span *ngIf="emailInvalido">El email introducido no es válido</span>
 		<span *ngIf="camposIncompletos">Debes completar todos los campos</span>
 	</form>
+
+	<!-- Modal de Firma -->
+	<div class="modal-overlay" *ngIf="showSignatureModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+		<div class="modal" style="background: white; border-radius: 12px; padding: 20px; width: 90%; max-width: 600px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+			<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+				<h3 style="margin: 0; color: #333;">✍️ Firma Digital</h3>
+				<button type="button" (click)="closeSignatureModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">✖</button>
+			</div>
+			<div class="modal-body">
+				<p style="margin: 0 0 15px 0; color: #666; font-size: 0.9rem;">Firma dentro del recuadro usando tu ratón o dedo</p>
+				<canvas id="signatureCanvas" width="560" height="200" style="border: 2px solid #ddd; border-radius: 8px; cursor: crosshair; display: block; width: 100%; touch-action: none;"></canvas>
+				<div style="display: flex; gap: 10px; margin-top: 20px;">
+					<button type="button" (click)="clearSignature()" style="flex: 1; padding: 12px; background-color: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+						🗑️ Limpiar
+					</button>
+					<button type="button" (click)="saveSignature()" style="flex: 1; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+						✓ Guardar Firma
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
