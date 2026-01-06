@@ -99,16 +99,6 @@ import { SpotifyService } from '../spotify.service';
 				this.emailInvalido = false;
 				this.camposIncompletos = false;
 
-				// Guardar datos del bar mediante la llamada específica
-				this.service.setBarData(this.email!, this.nombreBar!, this.ubicacionBar!).subscribe({
-					next: (response) => {
-						console.log('Datos del bar guardados', response);
-					},
-					error: (error) => {
-						console.error('Error guardando datos del bar:', error);
-					}
-				});
-
 				window.alert('Registro exitoso. Por favor, revise su correo para activar su cuenta.');
 
 				// Navegar a Main menu, donde se iniciará el flujo OAuth

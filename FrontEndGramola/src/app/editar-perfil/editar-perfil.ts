@@ -76,7 +76,7 @@ export class EditarPerfil implements OnInit {
 		this.service.getCosteCancion(this.email).subscribe({
 			next: (coste) => {
 				// Convertir de céntimos a euros
-				this.costeCancion = coste / 100;
+				this.costeCancion = coste;
 			},
 			error: (err) => console.error('Error cargando coste canción:', err)
 		});

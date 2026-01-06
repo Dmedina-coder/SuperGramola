@@ -33,7 +33,7 @@ public class UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-	public void register(String email, String pwd, String accessToken, String privateToken, String subscriptionExpiry, String firma){
+	public void register(String email, String pwd, String accessToken, String privateToken, String subscriptionExpiry, String firma, String nombreBar, String ubicacionBar, Double costeCancion){
 
 		Optional<User> optUser = userDao.findById(email);
 
@@ -43,6 +43,15 @@ public class UserService {
 			user.setPwd(passwordEncoder.encode(pwd));
 			if (firma != null && !firma.isBlank()) {
 				user.setFirma(firma);
+			}
+			if (nombreBar != null && !nombreBar.isBlank()) {
+				user.setNombreBar(nombreBar);
+			}
+			if (ubicacionBar != null && !ubicacionBar.isBlank()) {
+				user.setUbicacionBar(ubicacionBar);
+			}
+			if (costeCancion != null) {
+				user.setCosteCancion(costeCancion);
 			}
 			try {
 				if (accessToken != null && !accessToken.isBlank()) {

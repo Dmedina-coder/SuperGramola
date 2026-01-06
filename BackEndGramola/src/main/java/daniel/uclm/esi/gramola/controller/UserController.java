@@ -28,14 +28,17 @@ public class UserController {
 	private UserService userService;
 
 	@PostMapping("/register")
-	public void register(@RequestBody Map<String, String> userData) {
-		String email = userData.get("email");
-		String password = userData.get("pwd");
-		String password2 = userData.get("pwd2");
-		String accessToken = userData.get("accessToken");
-		String privateToken = userData.get("privateToken");
-		String subscriptionExpiry = userData.get("subscriptionExpiry");
-		String firma = userData.get("firma");
+	public void register(@RequestBody Map<String, Object> userData) {
+		String email = (String) userData.get("email");
+		String password = (String) userData.get("pwd");
+		String password2 = (String) userData.get("pwd2");
+		String accessToken = (String) userData.get("accessToken");
+		String privateToken = (String) userData.get("privateToken");
+		String subscriptionExpiry = (String) userData.get("subscriptionExpiry");
+		String firma = (String) userData.get("firma");
+		String nombreBar = (String) userData.get("nombreBar");
+		String ubicacionBar = (String) userData.get("ubicacionBar");
+		Double costeCancion = userData.get("costeCancion") != null ? ((Number) userData.get("costeCancion")).doubleValue() : null;
 
 		if (!password.equals(password2)) {
 			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,"Las contraseñas no coinciden");
@@ -47,7 +50,7 @@ public class UserController {
 			throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,"El email no es válido");
 		}
 
-		userService.register(email, password, accessToken, privateToken, subscriptionExpiry, firma);
+		userService.register(email, password, accessToken, privateToken, subscriptionExpiry, firma, nombreBar, ubicacionBar, costeCancion);
 	}
 
 	@PostMapping("/login")
