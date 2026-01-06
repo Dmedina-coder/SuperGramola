@@ -34,7 +34,7 @@ export class CallbackComponent implements OnInit {
       if (error) {
         console.error('Error en autorización:', error);
         alert('Error al autorizar con Spotify: ' + error);
-        this.router.navigate(['/spotify-api']);
+        this.router.navigate(['/']);
         return;
       }
 
@@ -43,7 +43,7 @@ export class CallbackComponent implements OnInit {
       if (state !== savedState) {
         console.error('State mismatch. Posible ataque CSRF.');
         alert('Error de seguridad en la autenticación.');
-        this.router.navigate(['/spotify-api']);
+        this.router.navigate(['/']);
         return;
       }
 
@@ -53,7 +53,7 @@ export class CallbackComponent implements OnInit {
       } else {
         console.error('No se recibió código de autorización');
         alert('No se pudo completar la autenticación con Spotify');
-        this.router.navigate(['/spotify-api']);
+        this.router.navigate(['/']);
       }
     });
   }
@@ -77,7 +77,7 @@ export class CallbackComponent implements OnInit {
       error: (error) => {
         console.error('Error al intercambiar código por tokens:', error);
         alert('Error al obtener tokens de Spotify. Intenta de nuevo.');
-        this.router.navigate(['/spotify-api']);
+        this.router.navigate(['/']);
       }
     });
   }

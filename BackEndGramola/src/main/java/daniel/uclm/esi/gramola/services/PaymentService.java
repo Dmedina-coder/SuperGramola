@@ -81,7 +81,7 @@ public class PaymentService {
 		
 		// Activar la suscripción del usuario (1 mes desde ahora)
 		var user = optUser.get();
-		java.time.LocalDateTime newExpiry = java.time.LocalDateTime.now();
+		java.time.LocalDateTime newExpiry = java.time.LocalDateTime.now().plusMonths(1);
 		user.setSubscriptionExpiry(newExpiry);
 		
 		// Asociar el email a la transacción

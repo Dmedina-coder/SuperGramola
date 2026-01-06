@@ -93,10 +93,7 @@ export class LoginForm implements OnInit {
 						next: ({ clientId, clientSecret, hasSubscription, isActive }) => {
 							const hasClientId = !!clientId && clientId.trim().length > 0;
 							const hasClientSecret = !!clientSecret && clientSecret.trim().length > 0;
-							
-							// Guardar estado de suscripción
-							this.sessionStorageService.setPremiumStatus(hasSubscription);
-							
+														
 							// Si tiene credenciales de Spotify, guardarlas
 							if (hasClientId && hasClientSecret) {
 								this.sessionStorageService.setSpotifyCredentials(clientId, clientSecret);
@@ -105,12 +102,15 @@ export class LoginForm implements OnInit {
 							// Revisar si cuenta esta activa
 							if (!isActive) {
 								alert('Tu cuenta no está activa. Por favor, verifica tu email para activarla.');
+								this.sessionStorageService.removeEmail();
 								return;
 							}
 							
 							// Verificar suscripción antes de navegar
 							if (hasSubscription) {
 								// Usuario con suscripción activa
+								// Guardar estado de suscripción
+								this.sessionStorageService.setPremiumStatus(hasSubscription);
 								if (hasClientId && hasClientSecret) {
 									// Tiene todo -> ir a gramola
 									this.router.navigate(['/gramola']);

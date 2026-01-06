@@ -54,8 +54,7 @@ public class User {
     }
 
     public void setPwd(String pwd) {
-        // Encriptar la contraseña antes de almacenarla
-        this.pwd = passwordEncoder.encode(pwd);
+        this.pwd = pwd;
     }
 
     public String getPwd() {

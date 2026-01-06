@@ -165,6 +165,7 @@ export class Payments implements OnInit, AfterViewInit {
         
         // Actualizar el estado de suscripción en sessionStorage
         this.sessionStorage.setPremiumStatus(true);
+        this.sessionStorage.setEmail(this.userEmail);
         
         // Redirigir después de 2 segundos
         setTimeout(() => {

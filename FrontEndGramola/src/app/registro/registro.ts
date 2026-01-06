@@ -82,13 +82,6 @@ import { SpotifyService } from '../spotify.service';
 				this.pwdDiferentes = false;
 				this.emailInvalido = false;
 				this.camposIncompletos = false;
-				this.session.setEmail(this.email!);
-
-				// Guardar credenciales de Spotify en sessionStorage
-				sessionStorage.setItem('clientId', this.clientId!);
-				sessionStorage.setItem('clientSecret', this.clientSecret!);
-
-				console.log('Usuario y credenciales de Spotify registrados');
 
 				// Guardar datos del bar mediante la llamada específica
 				this.service.setBarData(this.email!, this.nombreBar!, this.ubicacionBar!).subscribe({

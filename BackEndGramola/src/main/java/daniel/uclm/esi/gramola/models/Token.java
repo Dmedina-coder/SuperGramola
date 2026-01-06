@@ -9,12 +9,12 @@ public class Token {
 	@Id @Column(length = 36)
 	private String id;
 	private long creationTime;
-	private Long usedTime;
+	private long usedTime;
 
 	public Token() {
 		this.id = java.util.UUID.randomUUID().toString();
 		this.creationTime = System.currentTimeMillis();
-		this.usedTime = null;
+		this.usedTime = 0;
 	}
 
 	public String getID() {
@@ -34,7 +34,7 @@ public class Token {
 	}
 
 	public boolean isUsed() {
-		return this.usedTime > 0;
+		return this.usedTime != 0;
 	}
 
 	public void setUsedTime() {
