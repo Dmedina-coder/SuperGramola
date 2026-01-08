@@ -6,6 +6,8 @@ services:
     build:
       context: ./BackEndGramola
       dockerfile: Dockerfile
+      args:
+        - CACHEBUST=${CACHEBUST:-1}
     container_name: gramola-backend
     ports:
       - "8090:8080"  # Puerto personalizado 8090 mapeado al puerto interno 8080
