@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Backend - Spring Boot
+  backend:
+    build:
+      context: ./BackEndGramola
+      dockerfile: Dockerfile
+    container_name: gramola-backend
+    ports:
+      - "8090:8080"  # Puerto personalizado 8090 mapeado al puerto interno 8080
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://dmedinaserver.duckdns.org:3306/gramola?serverTimezone=UTC&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&maxAllowedPacket=134217728
+      - SPRING_DATASOURCE_USERNAME=gramola
+      - SPRING_DATASOURCE_PASSWORD=vmFc28bAZrd8
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - APP_BASE_URL=http://localhost:8090
+    networks:
+      - gramola-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend - Angular
+  frontend:
+    build:
+      context: ./FrontEndGramola
+      dockerfile: Dockerfile
+    container_name: gramola-frontend
+    ports:
+      - "4300:80"  # Puerto personalizado 4300 mapeado al puerto interno 80 de nginx
+    depends_on:
+      - backend
+    networks:
+      - gramola-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  gramola-network:
+    driver: bridge
+
+# Volúmenes opcionales (si necesitas persistir datos en el futuro)
+# volumes:
+#   backend-data:
