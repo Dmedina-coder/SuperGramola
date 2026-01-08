@@ -12,10 +12,11 @@ services:
     ports:
       - "8090:8080"  # Puerto personalizado 8090 mapeado al puerto interno 8080
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://dmedinaserver.duckdns.org:3306/gramola?serverTimezone=UTC&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&maxAllowedPacket=134217728
-      - SPRING_DATASOURCE_USERNAME=gramola
-      - SPRING_DATASOURCE_PASSWORD=vmFc28bAZrd8
+      - "SPRING_DATASOURCE_URL=
+      - SPRING_DATASOURCE_USERNAME=
+      - SPRING_DATASOURCE_PASSWORD=
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQL8Dialect
       - APP_BASE_URL=http://localhost:8090
       - SPRING_MAIL_HOST=smtp.gmail.com
       - SPRING_MAIL_PORT=587
