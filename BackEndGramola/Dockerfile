@@ -8,8 +8,8 @@ COPY mvnw .
 COPY mvnw.cmd .
 COPY .mvn .mvn
 
-# Descargar dependencias
-RUN mvn dependency:go-offline -B
+# Descargar dependencias (sin offline mode)
+RUN mvn dependency:resolve dependency:resolve-plugins -B
 
 # Copiar código fuente
 COPY src ./src
