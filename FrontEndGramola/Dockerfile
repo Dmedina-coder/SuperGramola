@@ -22,7 +22,7 @@ WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
 
 # Copiar archivos construidos desde la etapa anterior
-COPY --from=build /app/dist/front-end-gramola/browser ./
+COPY --from=build /app/dist/FrontEndGramola/browser ./
 
 # Copiar configuración personalizada de nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
